@@ -218,6 +218,7 @@ export default function App() {
                     isPositive={true}
                     icon={Wallet}
                     color="emerald"
+                    onClick={() => setActiveTab('analytics')}
                   />
                   <StatCard
                     title={t('App.Stat.AvgHousehold')}
@@ -226,18 +227,23 @@ export default function App() {
                     isPositive={true}
                     icon={TrendingUp}
                     color="blue"
+                    onClick={() => setActiveTab('demographics')}
                   />
                   <StatCard
                     title={t('App.Stat.ProvincesTracked')}
                     value="77"
                     icon={MapPin}
                     color="amber"
+                    onClick={() => {
+                      setActiveTab('regions');
+                    }}
                   />
                   <StatCard
                     title={t('App.Stat.EconomicGroups')}
                     value="8"
                     icon={Users}
                     color="rose"
+                    onClick={() => setActiveTab('demographics')}
                   />
                 </div>
 

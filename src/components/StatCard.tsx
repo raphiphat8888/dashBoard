@@ -10,6 +10,7 @@ interface StatCardProps {
   isPositive?: boolean;
   icon: LucideIcon;
   color: 'emerald' | 'blue' | 'amber' | 'rose';
+  onClick?: () => void;
 }
 
 const colorMap = {
@@ -19,12 +20,16 @@ const colorMap = {
   rose: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
 };
 
-export const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPositive, icon: Icon, color }) => {
+export const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPositive, icon: Icon, color, onClick }) => {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-zinc-900/50 border border-zinc-800/50 p-6 rounded-2xl hover:border-zinc-700 transition-all group"
+      onClick={onClick}
+      className={cn(
+        "bg-zinc-900/50 border border-zinc-800/50 p-6 rounded-2xl hover:border-zinc-700 transition-all group",
+        onClick ? "cursor-pointer hover:bg-zinc-800/40" : ""
+      )}
     >
       <div className="flex justify-between items-start">
         <div>
