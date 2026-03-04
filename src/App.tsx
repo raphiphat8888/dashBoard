@@ -155,7 +155,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-zinc-950 font-sans selection:bg-emerald-500/30 relative overflow-hidden">
+    <div className="fixed inset-0 flex bg-zinc-950 font-sans selection:bg-emerald-500/30 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_800px_at_100%_200px,#10b9810a,transparent)]"></div>

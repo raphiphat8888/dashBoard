@@ -20,7 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSet
   const { t } = useLanguage();
 
   return (
-    <div className="w-64 bg-zinc-950 text-zinc-400 flex flex-col h-screen sticky top-0 border-r border-zinc-800/50">
+    <div className="w-64 bg-zinc-950 text-zinc-400 flex flex-col h-full border-r border-zinc-800/50 z-20">
       <div className="p-6 flex items-center gap-3">
         <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-zinc-950 font-bold">
           D
