@@ -20,3 +20,14 @@ export interface DashboardStats {
   provinceCount: number;
   regionCount: number;
 }
+
+export interface IncomeDistData {
+  year: number;
+  province: string;
+  hh_size: string;
+  income: string;
+  value: number;
+  unit: string;
+  attribute: string;
+  source: string;
+}
