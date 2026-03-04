@@ -35,7 +35,7 @@ export const fetchMasterData = async (): Promise<any[]> => {
 
 export const getAggregatedDataByRegion = (data: IncomeData[]) => {
   const regions: Record<string, number> = {};
-  data.filter(d => d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน').forEach(d => {
+  data.forEach(d => {
     if (!regions[d.region]) regions[d.region] = 0;
     regions[d.region] += d.value;
   });
@@ -44,7 +44,7 @@ export const getAggregatedDataByRegion = (data: IncomeData[]) => {
 
 export const getTopProvinces = (data: IncomeData[], limit = 5) => {
   const provinces: Record<string, number> = {};
-  data.filter(d => d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน').forEach(d => {
+  data.forEach(d => {
     if (!provinces[d.province]) provinces[d.province] = 0;
     provinces[d.province] += d.value;
   });
@@ -56,7 +56,7 @@ export const getTopProvinces = (data: IncomeData[], limit = 5) => {
 
 export const getIncomeByClass = (data: IncomeData[]) => {
   const classes: Record<string, number> = {};
-  data.filter(d => d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน').forEach(d => {
+  data.forEach(d => {
     if (!classes[d.soc_eco_class1]) classes[d.soc_eco_class1] = 0;
     classes[d.soc_eco_class1] += d.value;
   });

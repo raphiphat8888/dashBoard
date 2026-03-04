@@ -40,6 +40,13 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // Filter states
+  const [filters, setFilters] = useState({
+    region: 'All Regions',
+    year: '2023',
+    incomeType: 'Total Monthly Income'
+  });
+
   const handleGenerateReport = () => {
     setActiveTab('analytics');
     setIsGenerating(true);
@@ -55,7 +62,7 @@ export default function App() {
     const headers = ["Province", "Region", "Income", "Class"];
     const csvRows = [headers.join(",")];
 
-    data.filter(d => d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน').forEach(row => {
+    filteredData.forEach(row => {
       csvRows.push(`${row.province},${row.region},${row.value},${row.soc_eco_class1}`);
     });
 
@@ -89,21 +96,52 @@ export default function App() {
       setIsLoading(false);
     });
   }, []);
-  const regionalData = useMemo(() => getAggregatedDataByRegion(data), [data]);
-  const topProvinces = useMemo(() => getTopProvinces(data), [data]);
-  const classData = useMemo(() => getIncomeByClass(data), [data]);
-  const incomeDistSummary = useMemo(() => getIncomeDistSummary(distData), [distData]);
+
+  const bkkProvinces = ['กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'สมุทรสาคร', 'นครปฐม'];
+
+  const filteredData = useMemo(() => {
+    return data.filter(d => {
+      // 1. Income Type Filter
+      let matchIncome = false;
+      switch (filters.incomeType) {
+        case 'Wages & Salaries': matchIncome = d.source_income3 === 'ค่าจ้างและเงินเดือน'; break;
+        case 'Business Income': matchIncome = d.source_income3 === 'กำไรสุทธิจากการทำธุรกิจ'; break;
+        case 'Agriculture & Farm': matchIncome = d.source_income3 === 'กำไรสุทธิจากการทำการเกษตร'; break;
+        case 'Pensions & Assistance': matchIncome = d.source_income3 === 'เงินที่ได้รับเป็นการช่วยเหลือ'; break;
+        case 'Total Monthly Income':
+        default: matchIncome = d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน'; break;
+      }
+      if (!matchIncome) return false;
+
+      // 2. Region Filter
+      if (filters.region !== 'All Regions') {
+        if (filters.region === 'Bangkok Metropolitan') {
+          if (!bkkProvinces.includes(d.province)) return false;
+        } else if (filters.region === 'Central') {
+          if (d.region !== 'กลาง' || bkkProvinces.includes(d.province)) return false;
+        } else if (filters.region === 'Northern' && d.region !== 'เหนือ') return false;
+        else if (filters.region === 'Northeastern' && d.region !== 'ตะวันออกเฉียงเหนือ') return false;
+        else if (filters.region === 'Southern' && d.region !== 'ใต้') return false;
+      }
+
+      // 3. Year Filter - currently dataset only has 2566/2023
+
+      return true;
+    });
+  }, [data, filters]);
+
+  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData), [filteredData]);
+  const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
+  const classData = useMemo(() => getIncomeByClass(filteredData), [filteredData]);
+  const incomeDistSummary = useMemo(() => getIncomeDistSummary(distData), [distData]); // Could also filter distData but currently mostly global
 
   const totalIncome = useMemo(() => {
-    return data
-      .filter(d => d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน')
-      .reduce((acc, curr) => acc + curr.value, 0);
-  }, [data]);
+    return filteredData.reduce((acc, curr) => acc + curr.value, 0);
+  }, [filteredData]);
 
   const avgIncome = useMemo(() => {
-    const filtered = data.filter(d => d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน');
-    return filtered.length ? totalIncome / filtered.length : 0;
-  }, [data, totalIncome]);
+    return filteredData.length ? totalIncome / filteredData.length : 0;
+  }, [filteredData, totalIncome]);
 
   if (isLoading) {
     return (
@@ -419,10 +457,10 @@ export default function App() {
       <FilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        onApply={(filters) => {
-          console.log('Applied filters:', filters);
-          // Here you would typically re-fetch data based on filters
+        onApply={(newFilters) => {
+          setFilters(newFilters);
         }}
+        currentFilters={filters}
       />
     </div>
   );

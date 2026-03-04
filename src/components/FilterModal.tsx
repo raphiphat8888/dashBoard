@@ -1,16 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Filter as FilterIcon, Search, Calendar, MapPin, Briefcase } from 'lucide-react';
 
 interface FilterModalProps {
     isOpen: boolean;
     onClose: () => void;
     onApply: (filters: any) => void;
+    currentFilters: {
+        region: string;
+        year: string;
+        incomeType: string;
+    }
 }
 
-export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply }) => {
-    const [region, setRegion] = useState('All Regions');
-    const [year, setYear] = useState('2023');
-    const [incomeType, setIncomeType] = useState('Total Monthly Income');
+export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, currentFilters }) => {
+    const [region, setRegion] = useState(currentFilters.region);
+    const [year, setYear] = useState(currentFilters.year);
+    const [incomeType, setIncomeType] = useState(currentFilters.incomeType);
+
+    useEffect(() => {
+        if (isOpen) {
+            setRegion(currentFilters.region);
+            setYear(currentFilters.year);
+            setIncomeType(currentFilters.incomeType);
+        }
+    }, [isOpen, currentFilters]);
 
     if (!isOpen) return null;
 
