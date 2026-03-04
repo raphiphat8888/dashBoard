@@ -50,7 +50,7 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
     }, []);
 
     const filteredAndSortedData = useMemo(() => {
-        let result = rawData;
+        let result = [...rawData];
 
         if (selectedRegion !== 'ทั้งหมด') {
             result = result.filter(item => item.region === selectedRegion);
@@ -70,8 +70,8 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
             return 0;
         });
 
-        return [...result]; // Return new array reference to trigger re-renders properly
-    }, [searchTerm, selectedRegion, sortConfig]);
+        return result;
+    }, [searchTerm, selectedRegion, sortConfig, rawData]);
 
     const requestSort = (key: SortKey) => {
         let direction: 'desc' | 'asc' = 'desc';
