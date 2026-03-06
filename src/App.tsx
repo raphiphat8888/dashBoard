@@ -101,7 +101,12 @@ export default function App() {
 
   const filteredData = useMemo(() => {
     return data.filter(d => {
-      // 1. Income Type Filter
+      // 1. Year Filter
+      if (filters.year) {
+        if (d.year_ad !== parseInt(filters.year)) return false;
+      }
+
+      // 2. Income Type Filter
       let matchIncome = false;
       switch (filters.incomeType) {
         case 'Wages & Salaries': matchIncome = d.source_income3 === 'ค่าจ้างและเงินเดือน'; break;
@@ -113,7 +118,7 @@ export default function App() {
       }
       if (!matchIncome) return false;
 
-      // 2. Region Filter
+      // 3. Region Filter
       if (filters.region !== 'All Regions') {
         if (filters.region === 'Bangkok Metropolitan') {
           if (!bkkProvinces.includes(d.province)) return false;
@@ -122,18 +127,39 @@ export default function App() {
         } else if (filters.region === 'Northern' && d.region !== 'เหนือ') return false;
         else if (filters.region === 'Northeastern' && d.region !== 'ตะวันออกเฉียงเหนือ') return false;
         else if (filters.region === 'Southern' && d.region !== 'ใต้') return false;
+        else if (filters.region === 'Eastern' && d.region !== 'ตะวันออก') return false;
+        else if (filters.region === 'Western' && d.region !== 'ตะวันตก') return false;
       }
-
-      // 3. Year Filter - currently dataset only has 2566/2023
 
       return true;
     });
   }, [data, filters]);
 
+  // Create a list of provinces that match the region filter to filter distData
+  const activeProvinces = useMemo(() => {
+    return Array.from(new Set(filteredData.map(d => d.province)));
+  }, [filteredData]);
+
+  const filteredDistData = useMemo(() => {
+    // If no regions are filtered, or it's 'All Regions', we might still want to filter by Year
+    return distData.filter(d => {
+      // 1. Year Filter (distData uses Thai year e.g. 2566)
+      const thaiYear = parseInt(filters.year) + 543;
+      if (d.year !== thaiYear) return false;
+
+      // 2. Region Filter (match by provinces found in filteredData)
+      if (filters.region !== 'All Regions') {
+        if (!activeProvinces.includes(d.province)) return false;
+      }
+
+      return true;
+    });
+  }, [distData, activeProvinces, filters.year, filters.region]);
+
   const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData), [filteredData]);
   const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
   const classData = useMemo(() => getIncomeByClass(filteredData), [filteredData]);
-  const incomeDistSummary = useMemo(() => getIncomeDistSummary(distData), [distData]); // Could also filter distData but currently mostly global
+  const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData), [filteredDistData]);
 
   const totalIncome = useMemo(() => {
     return filteredData.reduce((acc, curr) => acc + curr.value, 0);
@@ -314,7 +340,7 @@ export default function App() {
                 </div>
 
                 <div id="province-data-grid">
-                  <ProvinceDataGrid globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />
+                  <ProvinceDataGrid globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} filters={filters} />
                 </div>
               </>
             )}

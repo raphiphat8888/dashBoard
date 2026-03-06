@@ -65,9 +65,11 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                             <option>All Regions</option>
                             <option>Bangkok Metropolitan</option>
                             <option>Central</option>
-                            <option>Northern</option>
+                            <option>Eastern</option>
                             <option>Northeastern</option>
+                            <option>Northern</option>
                             <option>Southern</option>
+                            <option>Western</option>
                         </select>
                     </div>
 
