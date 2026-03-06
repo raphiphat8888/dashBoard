@@ -33,37 +33,51 @@ export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, children 
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => (
-  <ResponsiveContainer width="100%" height="100%">
-    <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-      <XAxis
-        dataKey="name"
-        stroke="#71717a"
-        fontSize={12}
-        tickLine={false}
-        axisLine={false}
-      />
-      <YAxis
-        stroke="#71717a"
-        fontSize={12}
-        tickLine={false}
-        axisLine={false}
-        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-      />
-      <Tooltip
-        contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
-        itemStyle={{ color: '#10b981' }}
-        formatter={(value: number) => [`฿${value.toLocaleString()}`, 'Total Income']}
-      />
-      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-        {data.map((entry, index) => (
-          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} fillOpacity={0.8} />
-        ))}
-      </Bar>
-    </BarChart>
-  </ResponsiveContainer>
-);
+export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => {
+  const getRegionColor = (name: string, index: number) => {
+    if (!name) return COLORS[index % COLORS.length];
+    const n = name.toString().trim();
+    if (n.includes('ตะวันออกเฉียงเหนือ')) return '#8b5cf6'; // Purple
+    if (n.includes('ตะวันออก')) return '#ec4899'; // Pink
+    if (n.includes('ตะวันตก')) return '#ef4444'; // Red
+    if (n.includes('กลาง')) return '#3b82f6'; // Blue
+    if (n.includes('เหนือ')) return '#f59e0b'; // Amber
+    if (n.includes('ใต้')) return '#06b6d4'; // Cyan
+    return COLORS[index % COLORS.length];
+  };
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+        <XAxis
+          dataKey="name"
+          stroke="#71717a"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+        />
+        <YAxis
+          stroke="#71717a"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+        />
+        <Tooltip
+          contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
+          itemStyle={{ color: '#10b981' }}
+          formatter={(value: number) => [`฿${value.toLocaleString()}`, 'Total Income']}
+        />
+        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={getRegionColor(entry.name, index)} fillOpacity={0.8} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
 
 export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
   const total = data.reduce((sum, entry) => sum + entry.value, 0);
