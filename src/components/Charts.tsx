@@ -36,13 +36,13 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => {
   const getRegionColor = (name: string, index: number) => {
     if (!name) return COLORS[index % COLORS.length];
-    const n = name.toString().trim();
-    if (n.includes('ตะวันออกเฉียงเหนือ')) return '#8b5cf6'; // Purple
-    if (n.includes('ตะวันออก')) return '#ec4899'; // Pink
-    if (n.includes('ตะวันตก')) return '#ef4444'; // Red
-    if (n.includes('กลาง')) return '#3b82f6'; // Blue
-    if (n.includes('เหนือ')) return '#f59e0b'; // Amber
-    if (n.includes('ใต้')) return '#06b6d4'; // Cyan
+    const n = name.toString().trim().toLowerCase();
+    if (n.includes('ตะวันออกเฉียงเหนือ') || n.includes('northeast')) return '#8b5cf6'; // Purple
+    if (n.includes('ตะวันออก') || n.includes('eastern')) return '#ec4899'; // Pink
+    if (n.includes('ตะวันตก') || n.includes('western')) return '#ef4444'; // Red
+    if (n.includes('กลาง') || n.includes('central')) return '#3b82f6'; // Blue
+    if (n.includes('เหนือ') || n.includes('northern')) return '#f59e0b'; // Amber
+    if (n.includes('ใต้') || n.includes('southern')) return '#06b6d4'; // Cyan
     return COLORS[index % COLORS.length];
   };
 
@@ -84,11 +84,11 @@ export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
 
   const getClassColor = (name: string, index: number) => {
     if (!name) return COLORS[index % COLORS.length];
-    const n = name.toString().trim();
-    if (n.includes('เกษตร')) return '#10b981'; // Green (Agriculture)
-    if (n.includes('ธุรกิจ')) return '#3b82f6'; // Blue (Business)
-    if (n.includes('ลูกจ้าง')) return '#f59e0b'; // Amber (Employee)
-    if (n.includes('ไม่ได้ปฏิบัติงาน')) return '#ef4444'; // Red (Inactive)
+    const n = name.toString().trim().toLowerCase();
+    if (n.includes('เกษตร') || n.includes('agri')) return '#10b981'; // Green (Agriculture)
+    if (n.includes('ธุรกิจ') || n.includes('business')) return '#3b82f6'; // Blue (Business)
+    if (n.includes('ลูกจ้าง') || n.includes('employee')) return '#f59e0b'; // Amber (Employee)
+    if (n.includes('ไม่ได้ปฏิบัติงาน') || n.includes('inactive')) return '#ef4444'; // Red (Inactive)
     return COLORS[index % COLORS.length];
   };
 
@@ -131,12 +131,12 @@ export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
 export const IncomeDistBarChart: React.FC<{ data: any[] }> = ({ data }) => {
   const getDistColor = (name: string, index: number) => {
     if (!name) return '#8b5cf6';
-    const n = name.toString().trim();
-    if (n.includes('ค่าจ้างและเงินเดือน')) return '#3b82f6'; // Blue
-    if (n.includes('ทำธุรกิจ')) return '#f59e0b'; // Amber
-    if (n.includes('ทำการเกษตร')) return '#10b981'; // Green
-    if (n.includes('ช่วยเหลือ')) return '#ef4444'; // Red
-    if (n.includes('ทรัพย์สิน')) return '#ec4899'; // Pink
+    const n = name.toString().trim().toLowerCase();
+    if (n.includes('ค่าจ้างและเงินเดือน') || n.includes('wages') || n.includes('salaries')) return '#3b82f6'; // Blue
+    if (n.includes('ทำธุรกิจ') || n.includes('business')) return '#f59e0b'; // Amber
+    if (n.includes('ทำการเกษตร') || n.includes('agri')) return '#10b981'; // Green
+    if (n.includes('ช่วยเหลือ') || n.includes('assistance') || n.includes('pension')) return '#ef4444'; // Red
+    if (n.includes('ทรัพย์สิน') || n.includes('property')) return '#ec4899'; // Pink
     return '#8b5cf6'; // Default Purple for non-cash, etc.
   };
 

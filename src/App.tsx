@@ -47,6 +47,35 @@ export default function App() {
     incomeType: 'Total Monthly Income'
   });
 
+  // Dataset Translation Dictionary
+  const translateDataLabel = useMemo(() => (key: string) => {
+    if (language !== 'en') return key;
+    const clean = key?.toString().trim() || '';
+    const dict: Record<string, string> = {
+      // Regions
+      'กลาง': 'Central',
+      'เหนือ': 'Northern',
+      'ใต้': 'Southern',
+      'ตะวันออกเฉียงเหนือ': 'Northeastern',
+      'ตะวันตก': 'Western',
+      'ตะวันออก': 'Eastern',
+      'กรุงเทพมหานคร': 'Bangkok Metropolitan',
+      // Classes
+      'ผู้ถือครองทำการเกษตร/เพาะเลี้ยง': 'Agriculture / Farming Operators',
+      'ผู้ประกอบธุรกิจของตนเองที่ไม่ใช่การเกษตร': 'Non-Agri Business Owners',
+      'ลูกจ้าง': 'Employees',
+      'ผู้ไม่ได้ปฏิบัติงานเชิงเศรษฐกิจ': 'Economically Inactive',
+      // Income Types
+      'ค่าจ้างและเงินเดือน': 'Wages & Salaries',
+      'กำไรสุทธิจากการทำธุรกิจ': 'Business Income',
+      'กำไรสุทธิจากการทำการเกษตร': 'Agriculture Income',
+      'เงินที่ได้รับเป็นการช่วยเหลือ': 'Assistance & Pensions',
+      'รายได้จากทรัพย์สิน': 'Property Income',
+      'รายได้ที่ไม่เป็นตัวเงิน': 'Non-Money Income'
+    };
+    return dict[clean] || key;
+  }, [language]);
+
   const handleGenerateReport = () => {
     setActiveTab('analytics');
     setIsGenerating(true);
@@ -183,10 +212,10 @@ export default function App() {
     });
   }, [distData, activeProvinces, filters.year, filters.region]);
 
-  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData), [filteredData]);
+  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
   const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
-  const classData = useMemo(() => getIncomeByClass(filteredData), [filteredData]);
-  const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData), [filteredDistData]);
+  const classData = useMemo(() => getIncomeByClass(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
+  const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredDistData, translateDataLabel]);
 
   const totalIncome = useMemo(() => {
     return filteredData.reduce((acc, curr) => acc + curr.value, 0);
