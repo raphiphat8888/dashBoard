@@ -103,47 +103,60 @@ export default function App() {
     return data.filter(d => {
       // 1. Year Filter
       if (filters.year) {
-        // Use loose equality or string conversion to be safe with types from PapaParse
-        if (String(d.year_ad) !== String(filters.year)) return false;
+        const targetYearAD = parseInt(filters.year);
+        const targetYearBE = targetYearAD + 543;
+
+        // Match against either year_ad or year (BE)
+        const dYearAD = d.year_ad ? Number(d.year_ad) : null;
+        const dYearBE = d.year ? Number(d.year) : null;
+
+        if (dYearAD) {
+          if (dYearAD !== targetYearAD) return false;
+        } else if (dYearBE) {
+          if (dYearBE !== targetYearBE) return false;
+        } else {
+          // If no year info found in row, skip it
+          return false;
+        }
       }
 
       // 2. Income Type Filter
       let matchIncome = false;
-      const cleanIncome3 = d.source_income3?.trim();
-      const cleanIncome1 = d.source_income1?.trim();
+      const cleanIncome3 = d.source_income3?.toString().trim() || '';
+      const cleanIncome1 = d.source_income1?.toString().trim() || '';
 
       switch (filters.incomeType) {
         case 'Wages & Salaries':
-          matchIncome = cleanIncome3 === 'ค่าจ้างและเงินเดือน';
+          matchIncome = cleanIncome3.includes('ค่าจ้างและเงินเดือน');
           break;
         case 'Business Income':
-          matchIncome = cleanIncome3 === 'กำไรสุทธิจากการทำธุรกิจ';
+          matchIncome = cleanIncome3.includes('กำไรสุทธิจากการทำธุรกิจ');
           break;
         case 'Agriculture & Farm':
-          matchIncome = cleanIncome3 === 'กำไรสุทธิจากการทำการเกษตร';
+          matchIncome = cleanIncome3.includes('กำไรสุทธิจากการทำการเกษตร');
           break;
         case 'Pensions & Assistance':
-          matchIncome = cleanIncome3 === 'เงินที่ได้รับเป็นการช่วยเหลือ';
+          matchIncome = cleanIncome3.includes('เงินที่ได้รับเป็นการช่วยเหลือ');
           break;
         case 'Total Monthly Income':
         default:
-          matchIncome = cleanIncome1 === 'รายได้ทั้งสิ้นต่อเดือน';
+          matchIncome = cleanIncome1.includes('รายได้ทั้งสิ้นต่อเดือน');
           break;
       }
       if (!matchIncome) return false;
 
       // 3. Region Filter
       if (filters.region !== 'All Regions') {
-        const cleanRegion = d.region?.trim();
+        const cleanRegion = d.region?.toString().trim() || '';
         if (filters.region === 'Bangkok Metropolitan') {
           if (!bkkProvinces.includes(d.province)) return false;
         } else if (filters.region === 'Central') {
-          if (cleanRegion !== 'กลาง' || bkkProvinces.includes(d.province)) return false;
-        } else if (filters.region === 'Northern' && cleanRegion !== 'เหนือ') return false;
-        else if (filters.region === 'Northeastern' && cleanRegion !== 'ตะวันออกเฉียงเหนือ') return false;
-        else if (filters.region === 'Southern' && cleanRegion !== 'ใต้') return false;
-        else if (filters.region === 'Eastern' && cleanRegion !== 'ตะวันออก') return false;
-        else if (filters.region === 'Western' && cleanRegion !== 'ตะวันตก') return false;
+          if (!cleanRegion.includes('กลาง') || bkkProvinces.includes(d.province)) return false;
+        } else if (filters.region === 'Northern' && !cleanRegion.includes('เหนือ')) return false;
+        else if (filters.region === 'Northeastern' && !cleanRegion.includes('ตะวันออกเฉียงเหนือ')) return false;
+        else if (filters.region === 'Southern' && !cleanRegion.includes('ใต้')) return false;
+        else if (filters.region === 'Eastern' && !cleanRegion.includes('ตะวันออก')) return false;
+        else if (filters.region === 'Western' && !cleanRegion.includes('ตะวันตก')) return false;
       }
 
       return true;
@@ -157,8 +170,7 @@ export default function App() {
 
   const filteredDistData = useMemo(() => {
     return distData.filter(d => {
-      // 1. Year matching (income_distribution_2566 has 2566)
-      // We convert e.g. 2023 -> 2566 for this specific dataset
+      // 1. Year matching (e.g. 2023 -> 2566)
       const thaiYear = parseInt(filters.year) + 543;
       if (Number(d.year) !== thaiYear) return false;
 
@@ -258,8 +270,8 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <StatCard
                     title={t('App.Stat.TotalIncome')}
-                    value={`฿${(totalIncome / 1000000).toFixed(2)}M`}
-                    change="12.5%"
+                    value={totalIncome > 0 ? `฿${(totalIncome / 1000000).toFixed(2)}M` : 'N/A'}
+                    change={totalIncome > 0 ? "12.5%" : undefined}
                     isPositive={true}
                     icon={Wallet}
                     color="emerald"
@@ -267,8 +279,8 @@ export default function App() {
                   />
                   <StatCard
                     title={t('App.Stat.AvgHousehold')}
-                    value={`฿${avgIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-                    change="4.2%"
+                    value={avgIncome > 0 ? `฿${avgIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : 'N/A'}
+                    change={avgIncome > 0 ? "4.2%" : undefined}
                     isPositive={true}
                     icon={TrendingUp}
                     color="blue"
