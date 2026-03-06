@@ -85,8 +85,8 @@ export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
   const getClassColor = (name: string, index: number) => {
     if (!name) return COLORS[index % COLORS.length];
     const n = name.toString().trim().toLowerCase();
+    if (n.includes('ธุรกิจ') || n.includes('business') || n.includes('ไม่ใช่การเกษตร')) return '#3b82f6'; // Blue (Business)
     if (n.includes('เกษตร') || n.includes('agri')) return '#10b981'; // Green (Agriculture)
-    if (n.includes('ธุรกิจ') || n.includes('business')) return '#3b82f6'; // Blue (Business)
     if (n.includes('ลูกจ้าง') || n.includes('employee')) return '#f59e0b'; // Amber (Employee)
     if (n.includes('ไม่ได้ปฏิบัติงาน') || n.includes('inactive')) return '#ef4444'; // Red (Inactive)
     return COLORS[index % COLORS.length];
