@@ -78,7 +78,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                             <Calendar size={16} className="text-emerald-500" /> Survey Year
                         </label>
                         <div className="flex gap-3">
-                            {['2021', '2022', '2023'].map(y => (
+                            {['2023'].map(y => (
                                 <button
                                     key={y}
                                     onClick={() => setYear(y)}
