@@ -54,6 +54,7 @@ export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => (
       <Tooltip
         contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
         itemStyle={{ color: '#10b981' }}
+        formatter={(value: number) => [`฿${value.toLocaleString()}`, 'Total Income']}
       />
       <Bar dataKey="value" radius={[4, 4, 0, 0]}>
         {data.map((entry, index) => (
@@ -64,29 +65,44 @@ export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => (
   </ResponsiveContainer>
 );
 
-export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => (
-  <ResponsiveContainer width="100%" height="100%">
-    <PieChart>
-      <Pie
-        data={data}
-        cx="50%"
-        cy="50%"
-        innerRadius={60}
-        outerRadius={80}
-        paddingAngle={5}
-        dataKey="value"
-      >
-        {data.map((entry, index) => (
-          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-        ))}
-      </Pie>
-      <Tooltip
-        contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
-      />
-      <Legend verticalAlign="bottom" height={36} iconType="circle" />
-    </PieChart>
-  </ResponsiveContainer>
-);
+export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
+  const total = data.reduce((sum, entry) => sum + entry.value, 0);
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={80}
+          paddingAngle={5}
+          dataKey="value"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', padding: '12px' }}
+          itemStyle={{ color: '#fff', fontSize: '13px' }}
+          formatter={(value: number, name: string) => {
+            const percent = ((value / total) * 100).toFixed(1);
+            return [
+              <span key="val">
+                <span className="text-emerald-400 font-bold">฿{value.toLocaleString()}</span>
+                <span className="text-zinc-500 ml-2">({percent}%)</span>
+              </span>,
+              <span key="name" className="text-zinc-300">{name}</span>
+            ];
+          }}
+        />
+        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+};
 
 export const IncomeDistBarChart: React.FC<{ data: any[] }> = ({ data }) => (
   <ResponsiveContainer width="100%" height="100%">
