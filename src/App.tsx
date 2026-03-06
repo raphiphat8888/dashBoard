@@ -30,7 +30,7 @@ import { ProvinceDataGrid } from './components/ProvinceDataGrid';
 import { IncomeData } from './types';
 
 export default function App() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiReport, setAiReport] = useState(false);
@@ -103,32 +103,47 @@ export default function App() {
     return data.filter(d => {
       // 1. Year Filter
       if (filters.year) {
-        if (d.year_ad !== parseInt(filters.year)) return false;
+        // Use loose equality or string conversion to be safe with types from PapaParse
+        if (String(d.year_ad) !== String(filters.year)) return false;
       }
 
       // 2. Income Type Filter
       let matchIncome = false;
+      const cleanIncome3 = d.source_income3?.trim();
+      const cleanIncome1 = d.source_income1?.trim();
+
       switch (filters.incomeType) {
-        case 'Wages & Salaries': matchIncome = d.source_income3 === 'ค่าจ้างและเงินเดือน'; break;
-        case 'Business Income': matchIncome = d.source_income3 === 'กำไรสุทธิจากการทำธุรกิจ'; break;
-        case 'Agriculture & Farm': matchIncome = d.source_income3 === 'กำไรสุทธิจากการทำการเกษตร'; break;
-        case 'Pensions & Assistance': matchIncome = d.source_income3 === 'เงินที่ได้รับเป็นการช่วยเหลือ'; break;
+        case 'Wages & Salaries':
+          matchIncome = cleanIncome3 === 'ค่าจ้างและเงินเดือน';
+          break;
+        case 'Business Income':
+          matchIncome = cleanIncome3 === 'กำไรสุทธิจากการทำธุรกิจ';
+          break;
+        case 'Agriculture & Farm':
+          matchIncome = cleanIncome3 === 'กำไรสุทธิจากการทำการเกษตร';
+          break;
+        case 'Pensions & Assistance':
+          matchIncome = cleanIncome3 === 'เงินที่ได้รับเป็นการช่วยเหลือ';
+          break;
         case 'Total Monthly Income':
-        default: matchIncome = d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน'; break;
+        default:
+          matchIncome = cleanIncome1 === 'รายได้ทั้งสิ้นต่อเดือน';
+          break;
       }
       if (!matchIncome) return false;
 
       // 3. Region Filter
       if (filters.region !== 'All Regions') {
+        const cleanRegion = d.region?.trim();
         if (filters.region === 'Bangkok Metropolitan') {
           if (!bkkProvinces.includes(d.province)) return false;
         } else if (filters.region === 'Central') {
-          if (d.region !== 'กลาง' || bkkProvinces.includes(d.province)) return false;
-        } else if (filters.region === 'Northern' && d.region !== 'เหนือ') return false;
-        else if (filters.region === 'Northeastern' && d.region !== 'ตะวันออกเฉียงเหนือ') return false;
-        else if (filters.region === 'Southern' && d.region !== 'ใต้') return false;
-        else if (filters.region === 'Eastern' && d.region !== 'ตะวันออก') return false;
-        else if (filters.region === 'Western' && d.region !== 'ตะวันตก') return false;
+          if (cleanRegion !== 'กลาง' || bkkProvinces.includes(d.province)) return false;
+        } else if (filters.region === 'Northern' && cleanRegion !== 'เหนือ') return false;
+        else if (filters.region === 'Northeastern' && cleanRegion !== 'ตะวันออกเฉียงเหนือ') return false;
+        else if (filters.region === 'Southern' && cleanRegion !== 'ใต้') return false;
+        else if (filters.region === 'Eastern' && cleanRegion !== 'ตะวันออก') return false;
+        else if (filters.region === 'Western' && cleanRegion !== 'ตะวันตก') return false;
       }
 
       return true;
@@ -141,11 +156,11 @@ export default function App() {
   }, [filteredData]);
 
   const filteredDistData = useMemo(() => {
-    // If no regions are filtered, or it's 'All Regions', we might still want to filter by Year
     return distData.filter(d => {
-      // 1. Year Filter (distData uses Thai year e.g. 2566)
+      // 1. Year matching (income_distribution_2566 has 2566)
+      // We convert e.g. 2023 -> 2566 for this specific dataset
       const thaiYear = parseInt(filters.year) + 543;
-      if (d.year !== thaiYear) return false;
+      if (Number(d.year) !== thaiYear) return false;
 
       // 2. Region Filter (match by provinces found in filteredData)
       if (filters.region !== 'All Regions') {
@@ -213,7 +228,11 @@ export default function App() {
                   {activeTab === 'demographics' && t('App.Title.demographics')}
                   {activeTab === 'analytics' && t('App.Title.analytics')}
                 </h1>
-                <p className="text-zinc-500 mt-1">{t('App.Subtitle')}</p>
+                <p className="text-zinc-500 mt-1">
+                  {language === 'en'
+                    ? `Household Income Analysis - Thailand ${filters.year}`
+                    : `วิเคราะห์รายได้ครัวเรือน - ประเทศไทย ปี ${parseInt(filters.year) + 543}`}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <button
