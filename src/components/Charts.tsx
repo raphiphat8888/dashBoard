@@ -82,6 +82,16 @@ export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => {
 export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
   const total = data.reduce((sum, entry) => sum + entry.value, 0);
 
+  const getClassColor = (name: string, index: number) => {
+    if (!name) return COLORS[index % COLORS.length];
+    const n = name.toString().trim();
+    if (n.includes('เกษตร')) return '#10b981'; // Green (Agriculture)
+    if (n.includes('ธุรกิจ')) return '#3b82f6'; // Blue (Business)
+    if (n.includes('ลูกจ้าง')) return '#f59e0b'; // Amber (Employee)
+    if (n.includes('ไม่ได้ปฏิบัติงาน')) return '#ef4444'; // Red (Inactive)
+    return COLORS[index % COLORS.length];
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
@@ -95,7 +105,7 @@ export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
           dataKey="value"
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+            <Cell key={`cell-${index}`} fill={getClassColor(entry.name, index)} stroke="none" />
           ))}
         </Pie>
         <Tooltip
@@ -118,38 +128,51 @@ export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
   );
 };
 
-export const IncomeDistBarChart: React.FC<{ data: any[] }> = ({ data }) => (
-  <ResponsiveContainer width="100%" height="100%">
-    <BarChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-      <XAxis
-        dataKey="name"
-        stroke="#71717a"
-        fontSize={11}
-        tickLine={false}
-        axisLine={false}
-        angle={-30}
-        textAnchor="end"
-        interval={0}
-      />
-      <YAxis
-        stroke="#71717a"
-        fontSize={12}
-        tickLine={false}
-        axisLine={false}
-        tickFormatter={(value) => `${value}%`}
-      />
-      <Tooltip
-        contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
-        itemStyle={{ color: '#10b981' }}
-        formatter={(value: any) => [`${value}%`, 'Percentage']}
-      />
-      <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={30}>
-        {data.map((entry, index) => (
-          <Cell key={`cell-${index}`} fillOpacity={0.8} />
-        ))}
-      </Bar>
-    </BarChart>
-  </ResponsiveContainer>
-);
+export const IncomeDistBarChart: React.FC<{ data: any[] }> = ({ data }) => {
+  const getDistColor = (name: string, index: number) => {
+    if (!name) return '#8b5cf6';
+    const n = name.toString().trim();
+    if (n.includes('ค่าจ้างและเงินเดือน')) return '#3b82f6'; // Blue
+    if (n.includes('ทำธุรกิจ')) return '#f59e0b'; // Amber
+    if (n.includes('ทำการเกษตร')) return '#10b981'; // Green
+    if (n.includes('ช่วยเหลือ')) return '#ef4444'; // Red
+    if (n.includes('ทรัพย์สิน')) return '#ec4899'; // Pink
+    return '#8b5cf6'; // Default Purple for non-cash, etc.
+  };
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+        <XAxis
+          dataKey="name"
+          stroke="#71717a"
+          fontSize={11}
+          tickLine={false}
+          axisLine={false}
+          angle={-30}
+          textAnchor="end"
+          interval={0}
+        />
+        <YAxis
+          stroke="#71717a"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => `${value}%`}
+        />
+        <Tooltip
+          contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
+          itemStyle={{ color: '#10b981' }}
+          formatter={(value: any) => [`${value}%`, 'Percentage']}
+        />
+        <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={30}>
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={getDistColor(entry.name, index)} fillOpacity={0.8} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
 
