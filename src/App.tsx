@@ -151,12 +151,12 @@ export default function App() {
         if (filters.region === 'Bangkok Metropolitan') {
           if (!bkkProvinces.includes(d.province)) return false;
         } else if (filters.region === 'Central') {
-          if (!cleanRegion.includes('กลาง') || bkkProvinces.includes(d.province)) return false;
-        } else if (filters.region === 'Northern' && !cleanRegion.includes('เหนือ')) return false;
-        else if (filters.region === 'Northeastern' && !cleanRegion.includes('ตะวันออกเฉียงเหนือ')) return false;
-        else if (filters.region === 'Southern' && !cleanRegion.includes('ใต้')) return false;
-        else if (filters.region === 'Eastern' && !cleanRegion.includes('ตะวันออก')) return false;
-        else if (filters.region === 'Western' && !cleanRegion.includes('ตะวันตก')) return false;
+          if (cleanRegion !== 'กลาง' || bkkProvinces.includes(d.province)) return false;
+        } else if (filters.region === 'Northern' && cleanRegion !== 'เหนือ') return false;
+        else if (filters.region === 'Northeastern' && cleanRegion !== 'ตะวันออกเฉียงเหนือ') return false;
+        else if (filters.region === 'Southern' && cleanRegion !== 'ใต้') return false;
+        else if (filters.region === 'Eastern' && cleanRegion !== 'ตะวันออก') return false;
+        else if (filters.region === 'Western' && cleanRegion !== 'ตะวันตก') return false;
       }
 
       return true;
