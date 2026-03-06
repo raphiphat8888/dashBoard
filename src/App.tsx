@@ -71,9 +71,32 @@ export default function App() {
       'กำไรสุทธิจากการทำการเกษตร': 'Agriculture Income',
       'เงินที่ได้รับเป็นการช่วยเหลือ': 'Assistance & Pensions',
       'รายได้จากทรัพย์สิน': 'Property Income',
-      'รายได้ที่ไม่เป็นตัวเงิน': 'Non-Money Income'
+      'รายได้ที่ไม่เป็นตัวเงิน': 'Non-Money Income',
+      // Income Brackets & Labels
+      'ต่ำกว่า 1,500 บาท': 'Under 1,500 THB',
+      '1,500 - 3,000 บาท': '1,500 - 3,000 THB',
+      '3,001 - 5,000 บาท': '3,001 - 5,000 THB',
+      '5,001 - 10,000 บาท': '5,001 - 10,000 THB',
+      '10,001 - 15,000 บาท': '10,001 - 15,000 THB',
+      '15,001 - 30,000 บาท': '15,001 - 30,000 THB',
+      '30,001 - 50,000 บาท': '30,001 - 50,000 THB',
+      '50,001 - 100,000 บาท': '50,001 - 100,000 THB',
+      'มากกว่า 100,000 บาท': 'Over 100,000 THB',
+      'ต่ำกว่า 500 บาท': 'Under 500 THB',
+      '500 - 1,500 บาท': '500 - 1,500 THB',
+      '1,501 - 3,000 บาท': '1,501 - 3,000 THB',
     };
-    return dict[clean] || key;
+
+    // Attempt exact match first
+    if (dict[clean]) return dict[clean];
+
+    // Generic replacements for dynamically constructed strings
+    let translated = clean;
+    translated = translated.replace('บาท', 'THB');
+    translated = translated.replace('ต่ำกว่า', 'Under');
+    translated = translated.replace('มากกว่า', 'Over');
+
+    return translated;
   }, [language]);
 
   const handleGenerateReport = () => {
@@ -448,8 +471,8 @@ export default function App() {
 
                 <div className="w-full">
                   <ChartCard
-                    title="การกระจายรายได้ตามขนาดครัวเรือน (Income Distribution)"
-                    subtitle="แสดงร้อยละเฉลี่ยของครัวเรือนตามช่วงรายได้ (Average distribution across all provinces)"
+                    title={language === 'en' ? "Income Distribution by Household Size" : "การกระจายรายได้ตามขนาดครัวเรือน (Income Distribution)"}
+                    subtitle={language === 'en' ? "Average distribution across all provinces structure" : "แสดงร้อยละเฉลี่ยของครัวเรือนตามช่วงรายได้ (Average distribution across all provinces)"}
                   >
                     <div className="h-[350px]">
                       <IncomeDistBarChart data={incomeDistSummary} />
