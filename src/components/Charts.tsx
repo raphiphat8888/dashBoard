@@ -35,7 +35,7 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 interface RegionalBarChartProps {
   data: any[];
-  onBarClick?: (data: any, index: number) => void;
+  onBarClick?: (data: any | null, index?: number) => void;
 }
 
 export const RegionalBarChart: React.FC<RegionalBarChartProps> = ({ data, onBarClick }) => {
@@ -53,7 +53,15 @@ export const RegionalBarChart: React.FC<RegionalBarChartProps> = ({ data, onBarC
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <BarChart
+        data={data}
+        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+        onClick={(state: any, event) => {
+          if (onBarClick && (!state || !state.activePayload)) {
+            onBarClick(null);
+          }
+        }}
+      >
         <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
         <XAxis
           dataKey="name"
@@ -91,7 +99,7 @@ export const RegionalBarChart: React.FC<RegionalBarChartProps> = ({ data, onBarC
 
 interface SocioEconomicPieChartProps {
   data: any[];
-  onPieClick?: (data: any, index: number) => void;
+  onPieClick?: (data: any | null, index?: number) => void;
 }
 
 export const SocioEconomicPieChart: React.FC<SocioEconomicPieChartProps> = ({ data, onPieClick }) => {
@@ -109,7 +117,13 @@ export const SocioEconomicPieChart: React.FC<SocioEconomicPieChartProps> = ({ da
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
+      <PieChart
+        onClick={(state: any) => {
+          if (onPieClick && (!state || !state.activePayload)) {
+            onPieClick(null);
+          }
+        }}
+      >
         <Pie
           data={data}
           cx="50%"
@@ -147,7 +161,7 @@ export const SocioEconomicPieChart: React.FC<SocioEconomicPieChartProps> = ({ da
 
 interface IncomeDistBarChartProps {
   data: any[];
-  onBarClick?: (data: any, index: number) => void;
+  onBarClick?: (data: any | null, index?: number) => void;
 }
 
 export const IncomeDistBarChart: React.FC<IncomeDistBarChartProps> = ({ data, onBarClick }) => {
@@ -164,7 +178,15 @@ export const IncomeDistBarChart: React.FC<IncomeDistBarChartProps> = ({ data, on
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
+      <BarChart
+        data={data}
+        margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+        onClick={(state: any) => {
+          if (onBarClick && (!state || !state.activePayload)) {
+            onBarClick(null);
+          }
+        }}
+      >
         <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
         <XAxis
           dataKey="name"

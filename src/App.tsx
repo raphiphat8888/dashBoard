@@ -383,6 +383,10 @@ export default function App() {
                       <RegionalBarChart
                         data={regionalData}
                         onBarClick={(data) => {
+                          if (!data) {
+                            setFilters(prev => ({ ...prev, region: 'All Regions' }));
+                            return;
+                          }
                           const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
                           if (targetRegion) {
                             setFilters(prev => ({ ...prev, region: targetRegion }));
@@ -470,6 +474,10 @@ export default function App() {
                     <RegionalBarChart
                       data={regionalData}
                       onBarClick={(data) => {
+                        if (!data) {
+                          setFilters(prev => ({ ...prev, region: 'All Regions' }));
+                          return;
+                        }
                         const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
                         if (targetRegion) {
                           setFilters(prev => ({ ...prev, region: targetRegion }));
