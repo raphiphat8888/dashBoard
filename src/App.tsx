@@ -246,24 +246,11 @@ export default function App() {
     return map[thaiName] || thaiName;
   };
 
-  const regionalData = useMemo(() => {
-    if (filters.region === 'All Regions') {
-      return getAggregatedDataByRegion(filteredData).map(d => ({
-        ...d,
-        name: translateDataLabel(d.name),
-        filterKey: getEnRegionName(d.name),
-        isProvince: false
-      }));
-    } else {
-      // Zoom into provinces if a region is selected
-      return getTopProvinces(filteredData, 100).map(d => ({
-        ...d,
-        name: language === 'en' ? translateDataLabel(d.name) : d.name,
-        filterKey: d.name,
-        isProvince: true
-      }));
-    }
-  }, [filteredData, translateDataLabel, filters.region, language]);
+  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData).map(d => ({
+    ...d,
+    name: translateDataLabel(d.name),
+    filterKey: getEnRegionName(d.name)
+  })), [filteredData, translateDataLabel]);
   const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
   const classData = useMemo(() => getIncomeByClass(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
   const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredDistData, translateDataLabel]);
@@ -400,13 +387,9 @@ export default function App() {
                             setFilters(prev => ({ ...prev, region: 'All Regions' }));
                             return;
                           }
-                          const isProvince = data?.payload?.isProvince || data?.isProvince;
-                          if (!isProvince) {
-                            const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
-                            if (targetRegion) {
-                              setFilters(prev => ({ ...prev, region: targetRegion }));
-                              setTimeout(handleViewAllProvinces, 100);
-                            }
+                          const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                          if (targetRegion) {
+                            setFilters(prev => ({ ...prev, region: targetRegion }));
                           }
                         }}
                       />
@@ -494,14 +477,9 @@ export default function App() {
                           setFilters(prev => ({ ...prev, region: 'All Regions' }));
                           return;
                         }
-                        const isProvince = data?.payload?.isProvince || data?.isProvince;
-                        if (!isProvince) {
-                          const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
-                          if (targetRegion) {
-                            setFilters(prev => ({ ...prev, region: targetRegion }));
-                            // Optional: scroll to Data Grid to see the filtered results
-                            setTimeout(handleViewAllProvinces, 100);
-                          }
+                        const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                        if (targetRegion) {
+                          setFilters(prev => ({ ...prev, region: targetRegion }));
                         }
                       }}
                     />

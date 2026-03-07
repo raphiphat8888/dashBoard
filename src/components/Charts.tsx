@@ -55,6 +55,7 @@ export const RegionalBarChart: React.FC<RegionalBarChartProps> = ({ data, onBarC
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
+        style={{ outline: 'none' }}
         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
         onClick={(state: any, event) => {
           if (onBarClick && (!state || !state.activePayload)) {
@@ -118,6 +119,7 @@ export const SocioEconomicPieChart: React.FC<SocioEconomicPieChartProps> = ({ da
   return (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart
+        style={{ outline: 'none' }}
         onClick={(state: any) => {
           if (onPieClick && (!state || !state.activePayload)) {
             onPieClick(null);
@@ -180,6 +182,7 @@ export const IncomeDistBarChart: React.FC<IncomeDistBarChartProps> = ({ data, on
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
+        style={{ outline: 'none' }}
         margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
         onClick={(state: any) => {
           if (onBarClick && (!state || !state.activePayload)) {
