@@ -33,7 +33,12 @@ export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, children 
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => {
+interface RegionalBarChartProps {
+  data: any[];
+  onBarClick?: (data: any, index: number) => void;
+}
+
+export const RegionalBarChart: React.FC<RegionalBarChartProps> = ({ data, onBarClick }) => {
   const getRegionColor = (name: string, index: number) => {
     if (!name) return COLORS[index % COLORS.length];
     const n = name.toString().trim().toLowerCase();
@@ -69,7 +74,12 @@ export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => {
           itemStyle={{ color: '#10b981' }}
           formatter={(value: number) => [`฿${value.toLocaleString()}`, 'Total Income']}
         />
-        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+        <Bar
+          dataKey="value"
+          radius={[4, 4, 0, 0]}
+          onClick={(data, index) => onBarClick && onBarClick(data, index)}
+          className={onBarClick ? 'cursor-pointer hover:opacity-90 transition-opacity duration-200' : ''}
+        >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={getRegionColor(entry.name, index)} fillOpacity={0.8} />
           ))}
@@ -79,7 +89,12 @@ export const RegionalBarChart: React.FC<{ data: any[] }> = ({ data }) => {
   );
 };
 
-export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
+interface SocioEconomicPieChartProps {
+  data: any[];
+  onPieClick?: (data: any, index: number) => void;
+}
+
+export const SocioEconomicPieChart: React.FC<SocioEconomicPieChartProps> = ({ data, onPieClick }) => {
   const total = data.reduce((sum, entry) => sum + entry.value, 0);
 
   const getClassColor = (name: string, index: number) => {
@@ -103,6 +118,8 @@ export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
           outerRadius={80}
           paddingAngle={5}
           dataKey="value"
+          onClick={(data, index) => onPieClick && onPieClick(data, index)}
+          className={onPieClick ? 'cursor-pointer hover:opacity-90 transition-opacity duration-200' : ''}
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={getClassColor(entry.name, index)} stroke="none" />
@@ -128,7 +145,12 @@ export const SocioEconomicPieChart: React.FC<{ data: any[] }> = ({ data }) => {
   );
 };
 
-export const IncomeDistBarChart: React.FC<{ data: any[] }> = ({ data }) => {
+interface IncomeDistBarChartProps {
+  data: any[];
+  onBarClick?: (data: any, index: number) => void;
+}
+
+export const IncomeDistBarChart: React.FC<IncomeDistBarChartProps> = ({ data, onBarClick }) => {
   const getDistColor = (name: string, index: number) => {
     if (!name) return '#8b5cf6';
     const n = name.toString().trim().toLowerCase();
@@ -166,7 +188,13 @@ export const IncomeDistBarChart: React.FC<{ data: any[] }> = ({ data }) => {
           itemStyle={{ color: '#10b981' }}
           formatter={(value: any) => [`${value}%`, 'Percentage']}
         />
-        <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={30}>
+        <Bar
+          dataKey="value"
+          radius={[4, 4, 0, 0]}
+          barSize={30}
+          onClick={(data, index) => onBarClick && onBarClick(data, index)}
+          className={onBarClick ? 'cursor-pointer hover:opacity-90 transition-opacity duration-200 cursor-pointer pointer-events-auto' : ''}
+        >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={getDistColor(entry.name, index)} fillOpacity={0.8} />
           ))}

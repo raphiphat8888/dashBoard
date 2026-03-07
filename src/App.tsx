@@ -233,7 +233,24 @@ export default function App() {
     });
   }, [distData, activeProvinces, filters.year, filters.region]);
 
-  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
+  const getEnRegionName = (thaiName: string) => {
+    const map: Record<string, string> = {
+      'กลาง': 'Central',
+      'เหนือ': 'Northern',
+      'ใต้': 'Southern',
+      'ตะวันออกเฉียงเหนือ': 'Northeastern',
+      'ตะวันตก': 'Western',
+      'ตะวันออก': 'Eastern',
+      'กรุงเทพมหานคร': 'Bangkok Metropolitan'
+    };
+    return map[thaiName] || thaiName;
+  };
+
+  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData).map(d => ({
+    ...d,
+    name: translateDataLabel(d.name),
+    filterKey: getEnRegionName(d.name)
+  })), [filteredData, translateDataLabel]);
   const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
   const classData = useMemo(() => getIncomeByClass(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
   const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredDistData, translateDataLabel]);
@@ -363,7 +380,16 @@ export default function App() {
                       title={t('App.Chart.RegionTitle')}
                       subtitle={t('App.Chart.RegionSub')}
                     >
-                      <RegionalBarChart data={regionalData} />
+                      <RegionalBarChart
+                        data={regionalData}
+                        onBarClick={(data) => {
+                          const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                          if (targetRegion) {
+                            setFilters(prev => ({ ...prev, region: targetRegion }));
+                            setTimeout(handleViewAllProvinces, 100);
+                          }
+                        }}
+                      />
                     </ChartCard>
                   </div>
                   <div className="lg:col-span-1">
@@ -441,7 +467,17 @@ export default function App() {
                   subtitle={t('App.Chart.RegionSub')}
                 >
                   <div className="h-[400px]">
-                    <RegionalBarChart data={regionalData} />
+                    <RegionalBarChart
+                      data={regionalData}
+                      onBarClick={(data) => {
+                        const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                        if (targetRegion) {
+                          setFilters(prev => ({ ...prev, region: targetRegion }));
+                          // Optional: scroll to Data Grid to see the filtered results
+                          setTimeout(handleViewAllProvinces, 100);
+                        }
+                      }}
+                    />
                   </div>
                 </ChartCard>
               </motion.div>
