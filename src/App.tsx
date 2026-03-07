@@ -246,11 +246,24 @@ export default function App() {
     return map[thaiName] || thaiName;
   };
 
-  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData).map(d => ({
-    ...d,
-    name: translateDataLabel(d.name),
-    filterKey: getEnRegionName(d.name)
-  })), [filteredData, translateDataLabel]);
+  const regionalData = useMemo(() => {
+    if (filters.region === 'All Regions') {
+      return getAggregatedDataByRegion(filteredData).map(d => ({
+        ...d,
+        name: translateDataLabel(d.name),
+        filterKey: getEnRegionName(d.name),
+        isProvince: false
+      }));
+    } else {
+      // Zoom into provinces if a region is selected
+      return getTopProvinces(filteredData, 100).map(d => ({
+        ...d,
+        name: language === 'en' ? translateDataLabel(d.name) : d.name,
+        filterKey: d.name,
+        isProvince: true
+      }));
+    }
+  }, [filteredData, translateDataLabel, filters.region, language]);
   const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
   const classData = useMemo(() => getIncomeByClass(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
   const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredDistData, translateDataLabel]);
@@ -377,7 +390,7 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
                   <div className="lg:col-span-2">
                     <ChartCard
-                      title={t('App.Chart.RegionTitle')}
+                      title={filters.region === 'All Regions' ? t('App.Chart.RegionTitle') : `${t('App.Chart.RegionTitle')} - ${filters.region}`}
                       subtitle={t('App.Chart.RegionSub')}
                     >
                       <RegionalBarChart
@@ -387,10 +400,13 @@ export default function App() {
                             setFilters(prev => ({ ...prev, region: 'All Regions' }));
                             return;
                           }
-                          const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
-                          if (targetRegion) {
-                            setFilters(prev => ({ ...prev, region: targetRegion }));
-                            setTimeout(handleViewAllProvinces, 100);
+                          const isProvince = data?.payload?.isProvince || data?.isProvince;
+                          if (!isProvince) {
+                            const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                            if (targetRegion) {
+                              setFilters(prev => ({ ...prev, region: targetRegion }));
+                              setTimeout(handleViewAllProvinces, 100);
+                            }
                           }
                         }}
                       />
@@ -467,7 +483,7 @@ export default function App() {
                 className="space-y-8 mt-6"
               >
                 <ChartCard
-                  title={t('App.Chart.RegionTitle')}
+                  title={filters.region === 'All Regions' ? t('App.Chart.RegionTitle') : `${t('App.Chart.RegionTitle')} - ${filters.region}`}
                   subtitle={t('App.Chart.RegionSub')}
                 >
                   <div className="h-[400px]">
@@ -478,11 +494,14 @@ export default function App() {
                           setFilters(prev => ({ ...prev, region: 'All Regions' }));
                           return;
                         }
-                        const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
-                        if (targetRegion) {
-                          setFilters(prev => ({ ...prev, region: targetRegion }));
-                          // Optional: scroll to Data Grid to see the filtered results
-                          setTimeout(handleViewAllProvinces, 100);
+                        const isProvince = data?.payload?.isProvince || data?.isProvince;
+                        if (!isProvince) {
+                          const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                          if (targetRegion) {
+                            setFilters(prev => ({ ...prev, region: targetRegion }));
+                            // Optional: scroll to Data Grid to see the filtered results
+                            setTimeout(handleViewAllProvinces, 100);
+                          }
                         }
                       }}
                     />
