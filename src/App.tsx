@@ -15,7 +15,6 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { StatCard } from './components/StatCard';
 import { ChartCard, RegionalBarChart, SocioEconomicPieChart, IncomeDistBarChart } from './components/Charts';
-import { SettingsModal } from './components/SettingsModal';
 import { FilterModal } from './components/FilterModal';
 import {
   fetchIncomeData,
@@ -37,7 +36,6 @@ export default function App() {
   const [globalSearch, setGlobalSearch] = useState('');
 
   // System states
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Filter states
@@ -268,7 +266,6 @@ export default function App() {
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onSettings={() => setIsSettingsOpen(true)}
       />
 
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -317,7 +314,11 @@ export default function App() {
 
             {/* Content Display based on Active Tab */}
             {activeTab === 'overview' && (
-              <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              >
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <StatCard
@@ -425,11 +426,16 @@ export default function App() {
                 <div id="province-data-grid">
                   <ProvinceDataGrid globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} filters={filters} />
                 </div>
-              </>
+              </motion.div>
             )}
 
             {activeTab === 'regions' && (
-              <div className="space-y-8 mt-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-8 mt-6"
+              >
                 <ChartCard
                   title={t('App.Chart.RegionTitle')}
                   subtitle={t('App.Chart.RegionSub')}
@@ -438,11 +444,16 @@ export default function App() {
                     <RegionalBarChart data={regionalData} />
                   </div>
                 </ChartCard>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'demographics' && (
-              <div className="space-y-8 mt-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, staggerChildren: 0.1 }}
+                className="space-y-8 mt-6"
+              >
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <ChartCard
                     title={t('App.Chart.ClassTitle')}
@@ -459,7 +470,14 @@ export default function App() {
                       {classData.map((cls, i) => (
                         <div key={i} className="flex justify-between items-center p-3 hover:bg-zinc-800/30 rounded-lg transition-colors">
                           <div className="flex items-center gap-3">
-                            <div className={`w-3 h-3 rounded-full ${['bg-emerald-500', 'bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500'][i % 6]}`}></div>
+                            <div className={`w-3 h-3 rounded-full ${(() => {
+                              const n = cls.name?.toString().trim().toLowerCase() || '';
+                              if (n.includes('ธุรกิจ') || n.includes('business') || n.includes('ไม่ใช่การเกษตร')) return 'bg-blue-500';
+                              if (n.includes('เกษตร') || n.includes('agri')) return 'bg-emerald-500';
+                              if (n.includes('ลูกจ้าง') || n.includes('employee')) return 'bg-amber-500';
+                              if (n.includes('ไม่ได้ปฏิบัติงาน') || n.includes('inactive')) return 'bg-red-500';
+                              return 'bg-purple-500';
+                            })()}`}></div>
                             <span className="text-zinc-300 font-medium">{cls.name}</span>
                           </div>
                           <span className="text-zinc-100 font-semibold">฿{cls.value.toLocaleString()}</span>
@@ -479,11 +497,16 @@ export default function App() {
                     </div>
                   </ChartCard>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'analytics' && (
-              <div className="space-y-8 mt-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="space-y-8 mt-6"
+              >
                 <div className="bg-emerald-500 rounded-2xl p-10 relative overflow-hidden group">
                   <div className="relative z-10">
                     <h3 className="text-4xl font-bold text-zinc-950 leading-tight tracking-tight">{t('App.An.Title')}</h3>
@@ -498,11 +521,6 @@ export default function App() {
                       >
                         {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
                         {isGenerating ? t('App.AI.Analyzing') : t('App.An.GenBtn')}
-                      </button>
-                      <button
-                        onClick={() => setIsSettingsOpen(true)}
-                        className="px-6 py-3 bg-emerald-400 text-zinc-950 rounded-xl font-bold hover:bg-emerald-300 transition-all shadow-xl">
-                        {t('App.An.ConfigBtn')}
                       </button>
                     </div>
                   </div>
@@ -557,26 +575,22 @@ export default function App() {
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
-      </main>
+      </main >
 
       {/* Modals */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-
-      <FilterModal
+      < FilterModal
         isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
+        onClose={() => setIsFilterOpen(false)
+        }
         onApply={(newFilters) => {
           setFilters(newFilters);
         }}
         currentFilters={filters}
       />
-    </div>
+    </div >
   );
 }

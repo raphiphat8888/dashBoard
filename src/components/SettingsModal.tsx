@@ -30,79 +30,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     </button>
                 </div>
 
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 h-[400px] overflow-y-auto">
-                    {/* Section 1 */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-emerald-500 uppercase tracking-wider flex items-center gap-2">
-                            <UserCircle size={16} /> Profile
-                        </h3>
-                        <div className="p-4 bg-zinc-950/50 border border-zinc-800/50 rounded-xl space-y-3 hover:border-emerald-500/30 transition-colors">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-zinc-400">Display Name</span>
-                                <span className="text-zinc-200 font-medium">Executive User</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-zinc-400">Role</span>
-                                <span className="text-zinc-200 font-medium bg-zinc-800 px-2 py-0.5 rounded-md">Administrator</span>
-                            </div>
-                            <button className="text-emerald-500 text-sm hover:text-emerald-400 mt-2 font-medium">Edit Profile...</button>
-                        </div>
+                <div className="p-6 h-[400px] overflow-y-auto flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center mb-6">
+                        <SlidersHorizontal size={32} className="text-zinc-500" />
                     </div>
-
-                    {/* Section 2 */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-emerald-500 uppercase tracking-wider flex items-center gap-2">
-                            <BellRing size={16} /> Notifications
-                        </h3>
-                        <div className="p-4 bg-zinc-950/50 border border-zinc-800/50 rounded-xl space-y-4 hover:border-emerald-500/30 transition-colors">
-                            <label className="flex items-center justify-between cursor-pointer group">
-                                <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">Email Alerts</span>
-                                <div className="relative inline-block w-10 h-5">
-                                    <input type="checkbox" defaultChecked className="peer sr-only" />
-                                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                                </div>
-                            </label>
-                            <label className="flex items-center justify-between cursor-pointer group">
-                                <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">Weekly Reports</span>
-                                <div className="relative inline-block w-10 h-5">
-                                    <input type="checkbox" defaultChecked className="peer sr-only" />
-                                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Section 3 */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-emerald-500 uppercase tracking-wider flex items-center gap-2">
-                            <Globe size={16} /> Regional Data
-                        </h3>
-                        <div className="p-4 bg-zinc-950/50 border border-zinc-800/50 rounded-xl space-y-4 hover:border-emerald-500/30 transition-colors text-sm">
-                            <p className="text-zinc-400">Default tracking region</p>
-                            <select className="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 outline-none">
-                                <option>All of Thailand</option>
-                                <option>Central Region</option>
-                                <option>Northern Region</option>
-                                <option>Southern Region</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Section 4 */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-emerald-500 uppercase tracking-wider flex items-center gap-2">
-                            <Zap size={16} /> Advanced Features
-                        </h3>
-                        <div className="p-4 bg-zinc-950/50 border border-zinc-800/50 rounded-xl space-y-4 hover:border-emerald-500/30 transition-colors text-sm">
-                            <button className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg transition-colors border border-zinc-700/50 flex items-center justify-center gap-2">
-                                <Zap size={16} className="text-amber-400" />
-                                Clear Local Cache
-                            </button>
-                            <button className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors border border-rose-500/20">
-                                Reset Dashboard Layout
-                            </button>
-                        </div>
-                    </div>
+                    <h3 className="text-xl font-semibold text-zinc-300 mb-2">Configurations Currently Unavailable</h3>
+                    <p className="text-zinc-500 max-w-sm">
+                        The settings module is currently under development. Preferences cannot be modifying at this time.
+                    </p>
                 </div>
 
                 <div className="p-4 border-t border-zinc-800/50 bg-zinc-900/80 flex justify-end gap-3">
