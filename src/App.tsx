@@ -14,7 +14,7 @@ import {
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { StatCard } from './components/StatCard';
-import { ChartCard, RegionalBarChart, SocioEconomicPieChart, IncomeDistBarChart } from './components/Charts';
+import { ChartCard, RegionalBarChart, SocioEconomicPieChart, IncomeDistBarChart, DebtPurposeBarChart, DebtSourcePieChart, ClassDebtBarChart } from './components/Charts';
 import { FilterModal } from './components/FilterModal';
 import {
   fetchIncomeData,
@@ -22,10 +22,16 @@ import {
   getTopProvinces,
   getIncomeByClass,
   fetchIncomeDistData,
-  getIncomeDistSummary
+  getIncomeDistSummary,
+  fetchMasterData,
+  fetchSocioEcoData,
+  getDebtPurposeDistribution,
+  getDebtSourceDistribution,
+  getDebtBySocioClass
 } from './services/dataService';
 import { useLanguage } from './lib/LanguageContext';
 import { ProvinceDataGrid } from './components/ProvinceDataGrid';
+import { ThailandMap } from './components/ThailandMap';
 import { IncomeData } from './types';
 
 export default function App() {
@@ -83,6 +89,15 @@ export default function App() {
       'ต่ำกว่า 500 บาท': 'Under 500 THB',
       '500 - 1,500 บาท': '500 - 1,500 THB',
       '1,501 - 3,000 บาท': '1,501 - 3,000 THB',
+      // Add some common debt purposes/sources
+      'ใช้ซื้อ/เช่าซื้อบ้านและ/หรือที่ดิน': 'Housing & Land',
+      'ใช้ในการศึกษา': 'Education',
+      'ใช้จ่ายอุปโภค บริโภคอื่น ๆ ในครัวเรือน': 'Household Consumption',
+      'ใช้ในการทำธุรกิจ': 'Business Operations',
+      'ใช้ในการทำเกษตร': 'Agriculture Operations',
+      'หนี้อื่น ๆ': 'Other Purposes',
+      'หนี้ในระบบ': 'Formal Debt (Systemic)',
+      'หนี้นอกระบบ': 'Informal Debt (Non-Systemic)',
     };
 
     // Attempt exact match first
@@ -137,12 +152,16 @@ export default function App() {
 
   const [data, setData] = useState<IncomeData[]>([]);
   const [distData, setDistData] = useState<any[]>([]);
+  const [masterData, setMasterData] = useState<any[]>([]);
+  const [socioData, setSocioData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchIncomeData(), fetchIncomeDistData()]).then(([res1, res2]) => {
+    Promise.all([fetchIncomeData(), fetchIncomeDistData(), fetchMasterData(), fetchSocioEcoData()]).then(([res1, res2, res3, res4]) => {
       setData(res1);
       setDistData(res2);
+      setMasterData(res3);
+      setSocioData(res4);
       setIsLoading(false);
     });
   }, []);
@@ -254,6 +273,32 @@ export default function App() {
   const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
   const classData = useMemo(() => getIncomeByClass(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
   const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredDistData, translateDataLabel]);
+
+  const filteredSocioData = useMemo(() => {
+    return socioData.filter(d => {
+      if (filters.region !== 'All Regions') {
+        if (!activeProvinces.includes(d.province)) return false;
+      }
+      return true;
+    });
+  }, [socioData, activeProvinces, filters.region]);
+
+  const debtPurposeData = useMemo(() => getDebtPurposeDistribution(filteredSocioData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredSocioData, translateDataLabel]);
+  const debtSourceData = useMemo(() => getDebtSourceDistribution(filteredSocioData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredSocioData, translateDataLabel]);
+  const classDebtData = useMemo(() => getDebtBySocioClass(filteredSocioData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredSocioData, translateDataLabel]);
+
+  // Prepare map data using masterData to get debt info alongside calculated income
+  const mapData = useMemo(() => {
+    return masterData.filter(m => m.province).map(m => {
+      // Find matching province in filteredData to get active income (if we want it to react to income type filter)
+      // Otherwise, just use masterData averages for the map
+      return {
+        province: m.province,
+        income: Number(m.avg_household_income) || 0,
+        debt: Number(m.avg_household_debt) || 0
+      };
+    });
+  }, [masterData]);
 
   const totalIncome = useMemo(() => {
     return filteredData.reduce((acc, curr) => acc + curr.value, 0);
@@ -465,26 +510,46 @@ export default function App() {
                 transition={{ duration: 0.4 }}
                 className="space-y-8 mt-6"
               >
-                <ChartCard
-                  title={filters.region === 'All Regions' ? t('App.Chart.RegionTitle') : `${t('App.Chart.RegionTitle')} - ${filters.region}`}
-                  subtitle={t('App.Chart.RegionSub')}
-                >
-                  <div className="h-[400px]">
-                    <RegionalBarChart
-                      data={regionalData}
-                      onBarClick={(data) => {
-                        if (!data) {
-                          setFilters(prev => ({ ...prev, region: 'All Regions' }));
-                          return;
-                        }
-                        const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
-                        if (targetRegion) {
-                          setFilters(prev => ({ ...prev, region: targetRegion }));
-                        }
-                      }}
-                    />
-                  </div>
-                </ChartCard>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Thailand Map */}
+                  <ChartCard
+                    title={language === 'en' ? "Geographic Income Distribution" : "การกระจายรายได้ตามภูมิศาสตร์"}
+                    subtitle={language === 'en' ? "Hover over provinces to view local metrics" : "เลื่อนเมาส์เหนือจังหวัดเพื่อดูข้อมูลในพื้นที่"}
+                  >
+                    <div className="h-[500px]">
+                      <ThailandMap
+                        data={mapData}
+                        language={language}
+                        onProvinceClick={(prov) => {
+                          setGlobalSearch(prov);
+                          setTimeout(handleViewAllProvinces, 300);
+                        }}
+                      />
+                    </div>
+                  </ChartCard>
+
+                  {/* Regional Bar Chart */}
+                  <ChartCard
+                    title={filters.region === 'All Regions' ? t('App.Chart.RegionTitle') : `${t('App.Chart.RegionTitle')} - ${filters.region}`}
+                    subtitle={t('App.Chart.RegionSub')}
+                  >
+                    <div className="h-[500px]">
+                      <RegionalBarChart
+                        data={regionalData}
+                        onBarClick={(data) => {
+                          if (!data) {
+                            setFilters(prev => ({ ...prev, region: 'All Regions' }));
+                            return;
+                          }
+                          const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                          if (targetRegion) {
+                            setFilters(prev => ({ ...prev, region: targetRegion }));
+                          }
+                        }}
+                      />
+                    </div>
+                  </ChartCard>
+                </div>
               </motion.div>
             )}
 
@@ -535,6 +600,37 @@ export default function App() {
                   >
                     <div className="h-[350px]">
                       <IncomeDistBarChart data={incomeDistSummary} />
+                    </div>
+                  </ChartCard>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mt-8">
+                  <ChartCard
+                    title={t('App.Demo.DebtPurposeTitle')}
+                    subtitle={t('App.Demo.DebtPurposeSub')}
+                  >
+                    <div className="h-[350px]">
+                      <DebtPurposeBarChart data={debtPurposeData} />
+                    </div>
+                  </ChartCard>
+
+                  <ChartCard
+                    title={t('App.Demo.DebtSourceTitle')}
+                    subtitle={t('App.Demo.DebtSourceSub')}
+                  >
+                    <div className="h-[350px] flex items-center justify-center">
+                      <DebtSourcePieChart data={debtSourceData} />
+                    </div>
+                  </ChartCard>
+                </div>
+
+                <div className="w-full mt-8">
+                  <ChartCard
+                    title={t('App.Demo.ClassDebtTitle')}
+                    subtitle={t('App.Demo.ClassDebtSub')}
+                  >
+                    <div className="h-[350px]">
+                      <ClassDebtBarChart data={classDebtData} />
                     </div>
                   </ChartCard>
                 </div>
@@ -627,6 +723,7 @@ export default function App() {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)
         }
+        activeTab={activeTab}
         onApply={(newFilters) => {
           setFilters(newFilters);
         }}

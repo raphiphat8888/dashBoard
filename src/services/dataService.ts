@@ -4,6 +4,7 @@ import { IncomeData } from '../types';
 import processedDataUrl from '@/processed_data_with_regions.csv?url';
 import masterDataUrl from '@/master_economic_data_2566.csv?url';
 import data2Url from '@/income_distribution_2566.csv?url';
+import socioEcoDataUrl from '@/socio_economic_income_2566.csv?url';
 
 export const fetchIncomeData = async (): Promise<IncomeData[]> => {
   const response = await fetch(processedDataUrl);
@@ -101,4 +102,85 @@ export const getIncomeDistSummary = (data: any[]) => {
   return Object.entries(dist)
     .map(([name, value]) => ({ name, value: Number((value / (provinceCount || 1)).toFixed(2)) }))
     .filter(item => item.value > 0);
+};
+
+export const fetchSocioEcoData = async (): Promise<any[]> => {
+  const response = await fetch(socioEcoDataUrl);
+  let csvText = await response.text();
+  csvText = csvText.replace(/^\uFEFF/, '').trim();
+  const results = Papa.parse(csvText, {
+    header: true,
+    dynamicTyping: true,
+    skipEmptyLines: true,
+  });
+  if (results.errors.length) {
+    console.error('PapaParse errors (SocioEco):', results.errors);
+  }
+  return results.data;
+};
+
+export const getDebtPurposeDistribution = (data: any[]) => {
+  const purposes: Record<string, { total: number; count: number }> = {};
+
+  data.forEach(d => {
+    if (d.hhdebt_totaldebt_purpose_source === 'จำแนกตามวัตถุประสงค์' && typeof d.value === 'number') {
+      const purpose = d.purpose_source_bor;
+      if (!purposes[purpose]) purposes[purpose] = { total: 0, count: 0 };
+      purposes[purpose].total += d.value;
+      purposes[purpose].count++;
+    }
+  });
+
+  return Object.entries(purposes)
+    .map(([name, { total, count }]) => ({
+      name,
+      value: Number((total / (count || 1)).toFixed(2))
+    }))
+    .filter(item => item.value > 0)
+    .sort((a, b) => b.value - a.value);
+};
+
+export const getDebtSourceDistribution = (data: any[]) => {
+  const sources: Record<string, { total: number; count: number }> = {};
+
+  data.forEach(d => {
+    if (d.hhdebt_totaldebt_purpose_source === 'จำแนกตามแหล่งเงินกู้' && typeof d.value === 'number') {
+      const source = d.purpose_source_bor;
+      if (!sources[source]) sources[source] = { total: 0, count: 0 };
+      sources[source].total += d.value;
+      sources[source].count++;
+    }
+  });
+
+  return Object.entries(sources)
+    .map(([name, { total, count }]) => ({
+      name,
+      value: Number((total / (count || 1)).toFixed(2))
+    }))
+    .filter(item => item.value > 0);
+};
+
+export const getDebtBySocioClass = (data: any[]) => {
+  const classes: Record<string, { total: number; count: number }> = {};
+
+  data.forEach(d => {
+    if (
+      d.hhdebt_totaldebt === 'จำนวนหนี้สินเฉลี่ยต่อครัวเรือน' &&
+      d.hhdebt_totaldebt_purpose_source === 'จำนวนหนี้สินเฉลี่ยต่อครัวเรือน' &&
+      typeof d.value === 'number'
+    ) {
+      const className = d.soc_eco_class1;
+      if (!classes[className]) classes[className] = { total: 0, count: 0 };
+      classes[className].total += d.value;
+      classes[className].count++;
+    }
+  });
+
+  return Object.entries(classes)
+    .map(([name, { total, count }]) => ({
+      name,
+      value: Number((total / (count || 1)).toFixed(2))
+    }))
+    .filter(item => item.value > 0)
+    .sort((a, b) => b.value - a.value);
 };

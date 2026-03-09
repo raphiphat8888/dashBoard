@@ -52,6 +52,12 @@ const translations: Record<Language, Record<string, string>> = {
 
         // Demographics
         'App.Demo.DistMetrics': 'Distribution Metrics',
+        'App.Demo.DebtPurposeTitle': 'Household Debt Purpose',
+        'App.Demo.DebtPurposeSub': 'Distribution of debt by stated objective',
+        'App.Demo.DebtSourceTitle': 'Formal vs Informal Debt',
+        'App.Demo.DebtSourceSub': 'Systemic vs Non-Systemic borrowing sources',
+        'App.Demo.ClassDebtTitle': 'Debt by Socio-Economic Class',
+        'App.Demo.ClassDebtSub': 'Average debt burden across demographic groups',
 
         // Analytics
         'App.An.Title': 'Advanced Analytics & AI Hub',
@@ -115,6 +121,12 @@ const translations: Record<Language, Record<string, string>> = {
 
         // Demographics
         'App.Demo.DistMetrics': 'ตัวชี้วัดการกระจายการเงิน',
+        'App.Demo.DebtPurposeTitle': 'วัตถุประสงค์การกู้ยืมหนี้สินในครัวเรือน',
+        'App.Demo.DebtPurposeSub': 'สัดส่วนหนี้สินรวมจำแนกตามวัตถุประสงค์',
+        'App.Demo.DebtSourceTitle': 'แหล่งที่มาของเงินกู้ยืม',
+        'App.Demo.DebtSourceSub': 'เปรียบเทียบหนี้ในระบบและหนี้นอกระบบ',
+        'App.Demo.ClassDebtTitle': 'หนี้สินเฉลี่ยแยกตามชนชั้นทางเศรษฐกิจ/สังคม',
+        'App.Demo.ClassDebtSub': 'ภาระหนี้สินเฉลี่ยเปรียบเทียบแต่ละกลุ่มประชากร',
 
         // Analytics
         'App.An.Title': 'ศูนย์กลางการวิเคราะห์ขั้นสูงและ AI',

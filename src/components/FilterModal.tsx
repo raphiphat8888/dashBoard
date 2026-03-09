@@ -5,6 +5,7 @@ interface FilterModalProps {
     isOpen: boolean;
     onClose: () => void;
     onApply: (filters: any) => void;
+    activeTab: string;
     currentFilters: {
         region: string;
         year: string;
@@ -12,7 +13,7 @@ interface FilterModalProps {
     }
 }
 
-export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, currentFilters }) => {
+export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, currentFilters, activeTab }) => {
     const [region, setRegion] = useState(currentFilters.region);
     const [year, setYear] = useState(currentFilters.year);
     const [incomeType, setIncomeType] = useState(currentFilters.incomeType);
@@ -73,39 +74,43 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                         </select>
                     </div>
 
-                    <div className="space-y-4">
-                        <label className="text-sm font-semibold text-zinc-400 flex items-center gap-2">
-                            <Calendar size={16} className="text-emerald-500" /> Survey Year
-                        </label>
-                        <div className="flex gap-3">
-                            {['2023'].map(y => (
-                                <button
-                                    key={y}
-                                    onClick={() => setYear(y)}
-                                    className={`flex-1 py-2.5 rounded-xl border font-medium transition-all ${year === y ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
-                                >
-                                    {y}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    {activeTab !== 'demographics' && (
+                        <>
+                            <div className="space-y-4">
+                                <label className="text-sm font-semibold text-zinc-400 flex items-center gap-2">
+                                    <Calendar size={16} className="text-emerald-500" /> Survey Year
+                                </label>
+                                <div className="flex gap-3">
+                                    {['2023'].map(y => (
+                                        <button
+                                            key={y}
+                                            onClick={() => setYear(y)}
+                                            className={`flex-1 py-2.5 rounded-xl border font-medium transition-all ${year === y ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                                        >
+                                            {y}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
-                    <div className="space-y-4">
-                        <label className="text-sm font-semibold text-zinc-400 flex items-center gap-2">
-                            <Briefcase size={16} className="text-emerald-500" /> Income Segment
-                        </label>
-                        <select
-                            value={incomeType}
-                            onChange={(e) => setIncomeType(e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all shadow-inner"
-                        >
-                            <option>Total Monthly Income</option>
-                            <option>Wages & Salaries</option>
-                            <option>Business Income</option>
-                            <option>Agriculture & Farm</option>
-                            <option>Pensions & Assistance</option>
-                        </select>
-                    </div>
+                            <div className="space-y-4">
+                                <label className="text-sm font-semibold text-zinc-400 flex items-center gap-2">
+                                    <Briefcase size={16} className="text-emerald-500" /> Income Segment
+                                </label>
+                                <select
+                                    value={incomeType}
+                                    onChange={(e) => setIncomeType(e.target.value)}
+                                    className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all shadow-inner"
+                                >
+                                    <option>Total Monthly Income</option>
+                                    <option>Wages & Salaries</option>
+                                    <option>Business Income</option>
+                                    <option>Agriculture & Farm</option>
+                                    <option>Pensions & Assistance</option>
+                                </select>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="p-4 border-t border-zinc-800/50 bg-zinc-900/80 flex justify-between items-center px-6">

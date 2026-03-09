@@ -229,3 +229,149 @@ export const IncomeDistBarChart: React.FC<IncomeDistBarChartProps> = ({ data, on
   );
 };
 
+export const DebtPurposeBarChart: React.FC<{ data: any[] }> = ({ data }) => {
+  const getColor = (name: string, index: number) => {
+    if (!name) return '#8b5cf6';
+    const n = name.toString().trim().toLowerCase();
+    if (n.includes('บ้าน') || n.includes('house')) return '#10b981'; // Green
+    if (n.includes('ศึกษา') || n.includes('edu')) return '#3b82f6'; // Blue
+    if (n.includes('อุปโภค') || n.includes('consume')) return '#f59e0b'; // Amber
+    if (n.includes('ธุรกิจ') || n.includes('business')) return '#ec4899'; // Pink
+    if (n.includes('เกษตร') || n.includes('agri')) return '#ef4444'; // Red
+    return COLORS[index % COLORS.length];
+  };
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={data}
+        layout="horizontal"
+        margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+        <XAxis
+          dataKey="name"
+          stroke="#71717a"
+          fontSize={11}
+          tickLine={false}
+          axisLine={false}
+          angle={-30}
+          textAnchor="end"
+          interval={0}
+        />
+        <YAxis
+          stroke="#71717a"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => `฿${(value / 1000).toFixed(0)}k`}
+        />
+        <Tooltip
+          contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
+          itemStyle={{ color: '#10b981' }}
+          formatter={(value: number) => [`฿${value.toLocaleString()}`, 'Average Debt']}
+        />
+        <Bar
+          dataKey="value"
+          radius={[4, 4, 0, 0]}
+          barSize={40}
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={getColor(entry.name, index)} fillOpacity={0.8} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
+
+export const DebtSourcePieChart: React.FC<{ data: any[] }> = ({ data }) => {
+  const total = data.reduce((sum, entry) => sum + entry.value, 0);
+
+  const getColor = (name: string, index: number) => {
+    if (!name) return COLORS[index % COLORS.length];
+    const n = name.toString().trim().toLowerCase();
+    if (n.includes('ในระบบ') || n.includes('formal')) return '#3b82f6'; // Blue
+    if (n.includes('นอกระบบ') || n.includes('informal')) return '#ef4444'; // Red
+    return COLORS[index % COLORS.length];
+  };
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={80}
+          paddingAngle={5}
+          dataKey="value"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={getColor(entry.name, index)} stroke="none" />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', padding: '12px' }}
+          itemStyle={{ color: '#fff', fontSize: '13px' }}
+          formatter={(value: number, name: string) => {
+            const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            return [
+              <span key="val">
+                <span className="text-emerald-400 font-bold">฿{value.toLocaleString()}</span>
+                <span className="text-zinc-500 ml-2">({percent}%)</span>
+              </span>,
+              <span key="name" className="text-zinc-300">{name}</span>
+            ];
+          }}
+        />
+        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+};
+
+export const ClassDebtBarChart: React.FC<{ data: any[] }> = ({ data }) => {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={data}
+        layout="vertical"
+        margin={{ top: 10, right: 30, left: 100, bottom: 0 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
+        <XAxis
+          type="number"
+          stroke="#71717a"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => `฿${(value / 1000).toFixed(0)}k`}
+        />
+        <YAxis
+          dataKey="name"
+          type="category"
+          stroke="#71717a"
+          fontSize={11}
+          tickLine={false}
+          axisLine={false}
+          width={90}
+        />
+        <Tooltip
+          contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
+          itemStyle={{ color: '#10b981' }}
+          formatter={(value: number) => [`฿${value.toLocaleString()}`, 'Average Debt']}
+        />
+        <Bar
+          dataKey="value"
+          radius={[0, 4, 4, 0]}
+          barSize={20}
+          fill="#8b5cf6"
+          fillOpacity={0.8}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
+
