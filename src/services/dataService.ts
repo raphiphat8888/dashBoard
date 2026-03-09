@@ -33,11 +33,20 @@ export const fetchMasterData = async (): Promise<any[]> => {
   return results.data;
 };
 
+const bkkProvinces = ['กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'นครปฐม', 'สมุทรปราการ', 'สมุทรสาคร'];
+
 export const getAggregatedDataByRegion = (data: IncomeData[]) => {
   const regions: Record<string, number> = {};
   data.forEach(d => {
-    if (!regions[d.region]) regions[d.region] = 0;
-    regions[d.region] += d.value;
+    let regionName = d.region;
+
+    // If the province is in the BKK metro area, separate it from "Central" (กลาง)
+    if (bkkProvinces.includes(d.province)) {
+      regionName = 'กรุงเทพมหานคร';
+    }
+
+    if (!regions[regionName]) regions[regionName] = 0;
+    regions[regionName] += d.value;
   });
   return Object.entries(regions).map(([name, value]) => ({ name, value }));
 };

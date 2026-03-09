@@ -64,6 +64,12 @@ const translations: Record<Language, Record<string, string>> = {
         'App.An.Provinces': 'provinces',
         'App.An.TotalIs': ', the total monthly household income across monitored segments is',
         'App.An.KeyObs': 'Key Observations:',
+        'App.An.Obs1.Title': 'Trajectory of Income Growth',
+        'App.An.Obs1.Desc': 'Overall household income has demonstrated regional resilience, maintaining a steady positive trajectory. Urban clusters exhibit a notably higher growth potential compared to the national average.',
+        'App.An.Obs2.Title': 'Socio-Economic Disparities',
+        'App.An.Obs2.Desc': 'A significant concentration of wealth is evident within the non-agricultural business and corporate employee sectors, presenting a structural income gap when compared to agricultural and rural demographics.',
+        'App.An.Obs3.Title': 'Top Performing Economic Hubs:',
+        'App.An.Obs3.Desc': 'are leading the nation as primary economic drivers, generating substantial average monthly household incomes fueled by industrial commercialization and robust service sectors.',
         'App.An.Rec': '* Recommendation: Focus policy initiatives on the Northeast region to bridge the 18% income gap identified in the lower quartile households.'
     },
     th: {
@@ -121,6 +127,12 @@ const translations: Record<Language, Record<string, string>> = {
         'App.An.Provinces': 'จังหวัด',
         'App.An.TotalIs': ', โททัลรายได้ครัวเรือนรายเดือนรวมครอบคลุมทุกกลุ่มตัวอย่างอยู่ที่',
         'App.An.KeyObs': 'ข้อสังเกตสำคัญที่พบ:',
+        'App.An.Obs1.Title': 'แนวโน้มการเติบโตของรายได้ครัวเรือน',
+        'App.An.Obs1.Desc': 'รายได้ครัวเรือนโดยรวมแสดงให้เห็นถึงความยืดหยุ่นทางเศรษฐกิจ ซึ่งมีการกระจายตัวสูงในเขตเมืองหลวงและเขตอุตสาหกรรม และสามารถรักษาเส้นทางการเติบโตเชิงบวกในอนาคตได้',
+        'App.An.Obs2.Title': 'ความเหลื่อมล้ำเชิงโครงสร้างทางเศรษฐกิจ',
+        'App.An.Obs2.Desc': 'พบการกระจุกตัวของความมั่งคั่งอย่างมีนัยสำคัญในกลุ่มผู้ประกอบธุรกิจที่ไม่ใช่การเกษตรและกลุ่มลูกจ้างประจำองค์กร ซึ่งสะท้อนช่องว่างรายได้เชิงโครงสร้างเมื่อเทียบกับประชากรในภาคเกษตรกรรม',
+        'App.An.Obs3.Title': 'ศูนย์กลางขับเคลื่อนเศรษฐกิจหลัก:',
+        'App.An.Obs3.Desc': 'เป็นกลุ่มจังหวัดผู้นำระดับประเทศที่ทำหน้าที่เป็นกลไกหลัก สร้างรายได้เฉลี่ยต่อครัวเรือนได้สูงสุด โดยได้รับแรงหนุนจากการพาณิชย์และภาคบริการที่แข็งแกร่ง',
         'App.An.Rec': '* คำแนะนำเพิ่มเติม: ควรมุ่งเน้นนโยบายช่วยเหลือลงพื้นที่ภาคตะวันออกเฉียงเหนือเพื่อลดช่องว่างรายได้ 18% ในกลุ่มครัวเรือนระดับล่าง'
     }
 };

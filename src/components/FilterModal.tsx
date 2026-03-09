@@ -65,9 +65,11 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                             <option>All Regions</option>
                             <option>Bangkok Metropolitan</option>
                             <option>Central</option>
-                            <option>Northern</option>
+                            <option>Eastern</option>
                             <option>Northeastern</option>
+                            <option>Northern</option>
                             <option>Southern</option>
+                            <option>Western</option>
                         </select>
                     </div>
 
@@ -76,7 +78,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApp
                             <Calendar size={16} className="text-emerald-500" /> Survey Year
                         </label>
                         <div className="flex gap-3">
-                            {['2021', '2022', '2023'].map(y => (
+                            {['2023'].map(y => (
                                 <button
                                     key={y}
                                     onClick={() => setYear(y)}

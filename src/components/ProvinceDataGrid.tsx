@@ -1,21 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, ArrowUpDown, AlertTriangle, MapPin } from 'lucide-react';
 
 import { fetchMasterData } from '../services/dataService';
+import { useLanguage } from '../lib/LanguageContext';
 
 const regions = ["ทั้งหมด", "กลาง", "เหนือ", "ใต้", "ตะวันออก", "ตะวันออกเฉียงเหนือ", "ตะวันตก"];
+
+const PROVINCE_EN_MAP: Record<string, string> = {
+    'กรุงเทพมหานคร': 'Bangkok', 'สมุทรปราการ': 'Samut Prakan', 'นนทบุรี': 'Nonthaburi', 'ปทุมธานี': 'Pathum Thani', 'พระนครศรีอยุธยา': 'Phra Nakhon Si Ayutthaya',
+    'อ่างทอง': 'Ang Thong', 'ลพบุรี': 'Lopburi', 'สิงห์บุรี': 'Sing Buri', 'ชัยนาท': 'Chai Nat', 'สระบุรี': 'Saraburi',
+    'ชลบุรี': 'Chonburi', 'ระยอง': 'Rayong', 'จันทบุรี': 'Chanthaburi', 'ตราด': 'Trat', 'ฉะเชิงเทรา': 'Chachoengsao',
+    'ปราจีนบุรี': 'Prachinburi', 'นครนายก': 'Nakhon Nayok', 'สระแก้ว': 'Sa Kaeo', 'นครราชสีมา': 'Nakhon Ratchasima', 'บุรีรัมย์': 'Buri Ram',
+    'สุรินทร์': 'Surin', 'ศรีสะเกษ': 'Si Sa Ket', 'อุบลราชธานี': 'Ubon Ratchathani', 'ยโสธร': 'Yasothon', 'ชัยภูมิ': 'Chaiyaphum',
+    'อำนาจเจริญ': 'Amnat Charoen', 'หนองบัวลำภู': 'Nong Bua Lam Phu', 'ขอนแก่น': 'Khon Kaen', 'อุดรธานี': 'Udon Thani', 'เลย': 'Loei',
+    'หนองคาย': 'Nong Khai', 'มหาสารคาม': 'Maha Sarakham', 'ร้อยเอ็ด': 'Roi Et', 'กาฬสินธุ์': 'Kalasin', 'สกลนคร': 'Sakon Nakhon',
+    'นครพนม': 'Nakhon Phanom', 'มุกดาหาร': 'Mukdahan', 'เชียงใหม่': 'Chiang Mai', 'ลำพูน': 'Lamphun', 'ลำปาง': 'Lampang',
+    'อุตรดิตถ์': 'Uttaradit', 'แพร่': 'Phrae', 'น่าน': 'Nan', 'พะเยา': 'Phayao', 'เชียงราย': 'Chiang Rai',
+    'แม่ฮ่องสอน': 'Mae Hong Son', 'นครสวรรค์': 'Nakhon Sawan', 'อุทัยธานี': 'Uthai Thani', 'กำแพงเพชร': 'Kamphaeng Phet', 'ตาก': 'Tak',
+    'สุโขทัย': 'Sukhothai', 'พิษณุโลก': 'Phitsanulok', 'พิจิตร': 'Phichit', 'เพชรบูรณ์': 'Phetchabun', 'ราชบุรี': 'Ratchaburi',
+    'กาญจนบุรี': 'Kanchanaburi', 'สุพรรณบุรี': 'Suphan Buri', 'นครปฐม': 'Nakhon Pathom', 'สมุทรสาคร': 'Samut Sakhon', 'สมุทรสงคราม': 'Samut Songkhram',
+    'เพชรบุรี': 'Phetchaburi', 'ประจวบคีรีขันธ์': 'Prachuap Khiri Khan', 'นครศรีธรรมราช': 'Nakhon Si Thammarat', 'กระบี่': 'Krabi', 'พังงา': 'Phang Nga',
+    'ภูเก็ต': 'Phuket', 'สุราษฎร์ธานี': 'Surat Thani', 'ระนอง': 'Ranong', 'ชุมพร': 'Chumphon', 'สงขลา': 'Songkhla',
+    'สตูล': 'Satun', 'ตรัง': 'Trang', 'พัทลุง': 'Phatthalung', 'ปัตตานี': 'Pattani', 'ยะลา': 'Yala',
+    'นราธิวาส': 'Narathiwat', 'บึงกาฬ': 'Bueng Kan'
+};
 
 interface ProvinceDataGridProps {
     globalSearch?: string;
     setGlobalSearch?: (val: string) => void;
+    filters?: {
+        region: string;
+        year: string;
+        incomeType: string;
+    }
 }
 
-export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch, setGlobalSearch }) => {
+export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch, setGlobalSearch, filters }) => {
     const [rawData, setRawData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [localSearchTerm, setLocalSearchTerm] = useState('');
     const searchTerm = globalSearch !== undefined ? globalSearch : localSearchTerm;
     const updateSearchTerm = setGlobalSearch || setLocalSearchTerm;
+
+    const { language } = useLanguage();
 
     const [selectedRegion, setSelectedRegion] = useState('ทั้งหมด');
     type SortKey = 'income' | 'debt' | 'poverty' | 'debtRatio';
@@ -23,7 +50,25 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
 
     const [debug, setDebug] = useState<string>('');
 
-    React.useEffect(() => {
+    // Sync external region filter to local state
+    useEffect(() => {
+        if (filters?.region) {
+            const regionMap: Record<string, string> = {
+                'All Regions': 'ทั้งหมด',
+                'Bangkok Metropolitan': 'กรุงเทพและปริมณฑล',
+                'Central': 'กลาง',
+                'Northern': 'เหนือ',
+                'Northeastern': 'ตะวันออกเฉียงเหนือ',
+                'Southern': 'ใต้',
+                'Eastern': 'ตะวันออก',
+                'Western': 'ตะวันตก'
+            };
+            const mapped = regionMap[filters.region];
+            if (mapped) setSelectedRegion(mapped);
+        }
+    }, [filters?.region]);
+
+    useEffect(() => {
         fetchMasterData()
             .then(data => {
                 if (!data || data.length === 0) {
@@ -53,7 +98,17 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
         let result = [...rawData];
 
         if (selectedRegion !== 'ทั้งหมด') {
-            result = result.filter(item => item.region === selectedRegion);
+            if (selectedRegion === 'กรุงเทพและปริมณฑล') {
+                const bkkProvinces = ['กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'สมุทรสาคร', 'นครปฐม'];
+                result = result.filter(item => bkkProvinces.includes(item.province));
+            } else {
+                result = result.filter(item => item.region === selectedRegion);
+                // Also exclude BKK provinces from 'Central' in grid if we want to be consistent with Dashboard
+                if (selectedRegion === 'กลาง') {
+                    const bkkProvinces = ['กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'สมุทรสาคร', 'นครปฐม'];
+                    result = result.filter(item => !bkkProvinces.includes(item.province));
+                }
+            }
         }
 
         if (searchTerm) {
@@ -84,7 +139,7 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
     return (
         <div className="space-y-6 mt-8">
             <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold tracking-tight text-zinc-100">เจาะลึกข้อมูลระดับจังหวัด</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{language === 'en' ? 'Province Data Drill-Down' : 'เจาะลึกข้อมูลระดับจังหวัด'}</h2>
                 <span className="px-2.5 py-1 text-xs font-semibold bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">
                     Interactive Data
                 </span>
@@ -94,7 +149,7 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        กำลังโหลดข้อมูล...
+                        {language === 'en' ? 'Loading data...' : 'กำลังโหลดข้อมูล...'}
                     </span>
                 )}
             </div>
@@ -106,7 +161,7 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                     <input
                         type="text"
-                        placeholder="ค้นหาจังหวัด..."
+                        placeholder={language === 'en' ? "Search province in Thai..." : "ค้นหาจังหวัด..."}
                         value={searchTerm}
                         onChange={(e) => updateSearchTerm(e.target.value)}
                         className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
@@ -116,18 +171,30 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
                 {/* Filters */}
                 <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
                     <Filter size={18} className="text-zinc-500 mr-2 hidden sm:block" />
-                    {regions.map(region => (
-                        <button
-                            key={region}
-                            onClick={() => setSelectedRegion(region)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${selectedRegion === region
-                                ? 'bg-emerald-500 text-zinc-950'
-                                : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-700/50'
-                                }`}
-                        >
-                            {region}
-                        </button>
-                    ))}
+                    {regions.map(region => {
+                        let regionLabel = region;
+                        if (language === 'en') {
+                            if (region === 'ทั้งหมด') regionLabel = 'All Regions';
+                            if (region === 'กลาง') regionLabel = 'Central';
+                            if (region === 'เหนือ') regionLabel = 'Northern';
+                            if (region === 'ใต้') regionLabel = 'Southern';
+                            if (region === 'ตะวันออก') regionLabel = 'Eastern';
+                            if (region === 'ตะวันออกเฉียงเหนือ') regionLabel = 'Northeastern';
+                            if (region === 'ตะวันตก') regionLabel = 'Western';
+                        }
+                        return (
+                            <button
+                                key={region}
+                                onClick={() => setSelectedRegion(region)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${selectedRegion === region
+                                    ? 'bg-emerald-500 text-zinc-950'
+                                    : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-700/50'
+                                    }`}
+                            >
+                                {regionLabel}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -141,16 +208,16 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
             <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl overflow-hidden">
                 {/* Table Header */}
                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-zinc-950/50 border-b border-zinc-800/50 text-xs font-semibold text-zinc-400">
-                    <div className="col-span-3">จังหวัด / ภูมิภาค</div>
+                    <div className="col-span-3">{language === 'en' ? 'Province / Region' : 'จังหวัด / ภูมิภาค'}</div>
                     <div className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-emerald-400 transition-colors" onClick={() => requestSort('income')}>
-                        รายได้เฉลี่ย <ArrowUpDown size={14} className={sortConfig.key === 'income' ? 'text-emerald-500' : ''} />
+                        {language === 'en' ? 'Avg Income' : 'รายได้เฉลี่ย'} <ArrowUpDown size={14} className={sortConfig.key === 'income' ? 'text-emerald-500' : ''} />
                     </div>
                     <div className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-emerald-400 transition-colors" onClick={() => requestSort('debt')}>
-                        หนี้สิน <ArrowUpDown size={14} className={sortConfig.key === 'debt' ? 'text-emerald-500' : ''} />
+                        {language === 'en' ? 'Average Debt' : 'หนี้สิน'} <ArrowUpDown size={14} className={sortConfig.key === 'debt' ? 'text-emerald-500' : ''} />
                     </div>
-                    <div className="col-span-3">สัดส่วนรายได้ vs หนี้ (Visual)</div>
+                    <div className="col-span-3">{language === 'en' ? 'Income vs Debt Ratio (Visual)' : 'สัดส่วนรายได้ vs หนี้ (Visual)'}</div>
                     <div className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-emerald-400 transition-colors justify-end" onClick={() => requestSort('poverty')}>
-                        เส้นความยากจน <ArrowUpDown size={14} className={sortConfig.key === 'poverty' ? 'text-emerald-500' : ''} />
+                        {language === 'en' ? 'Poverty Line' : 'เส้นความยากจน'} <ArrowUpDown size={14} className={sortConfig.key === 'poverty' ? 'text-emerald-500' : ''} />
                     </div>
                 </div>
 
@@ -171,20 +238,31 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
                                 <div className="col-span-3 w-full">
                                     <div className="flex items-center gap-2">
                                         <MapPin size={16} className="text-emerald-500" />
-                                        <span className="font-bold text-zinc-200">{data.province}</span>
+                                        <span className="font-bold text-zinc-200">{language === 'en' ? (PROVINCE_EN_MAP[data.province] || data.province) : data.province}</span>
                                     </div>
-                                    <span className="text-[10px] text-zinc-500 font-medium ml-6 px-1.5 py-0.5 rounded-sm bg-zinc-800/80 uppercase tracking-wider">{data.region}</span>
+                                    <span className="text-[10px] text-zinc-500 font-medium ml-6 px-1.5 py-0.5 rounded-sm bg-zinc-800/80 uppercase tracking-wider">{(() => {
+                                        if (language === 'en') {
+                                            if (data.region === 'กลาง') return 'Central';
+                                            if (data.region === 'เหนือ') return 'Northern';
+                                            if (data.region === 'ใต้') return 'Southern';
+                                            if (data.region === 'ตะวันออก') return 'Eastern';
+                                            if (data.region === 'ตะวันออกเฉียงเหนือ') return 'Northeastern';
+                                            if (data.region === 'ตะวันตก') return 'Western';
+                                            if (data.region === 'กรุงเทพและปริมณฑล') return 'Bangkok Metropolitan';
+                                        }
+                                        return data.region;
+                                    })()}</span>
                                 </div>
 
                                 {/* Income */}
                                 <div className="col-span-2 w-full flex justify-between md:block">
-                                    <span className="md:hidden text-zinc-500 text-sm">รายได้:</span>
+                                    <span className="md:hidden text-zinc-500 text-sm">{language === 'en' ? 'Income:' : 'รายได้:'}</span>
                                     <span className="font-semibold text-zinc-300">฿{data.income.toLocaleString()}</span>
                                 </div>
 
                                 {/* Debt */}
                                 <div className="col-span-2 w-full flex justify-between md:block">
-                                    <span className="md:hidden text-zinc-500 text-sm">หนี้สิน:</span>
+                                    <span className="md:hidden text-zinc-500 text-sm">{language === 'en' ? 'Debt:' : 'หนี้สิน:'}</span>
                                     <span className={isDanger ? "font-semibold text-rose-400" : "font-semibold text-amber-500"}>
                                         ฿{data.debt.toLocaleString()}
                                     </span>
@@ -198,12 +276,12 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
                                     <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden flex">
                                         <div className={`h-full rounded-full transition-all duration-1000 ease-out ${isDanger ? 'bg-rose-500' : 'bg-amber-500'}`} style={{ width: `${debtWidth}%` }}></div>
                                     </div>
-                                    {isDanger && <p className="text-[10px] text-rose-400 font-bold tracking-wide">! สัดส่วนหนี้สูง: {data.debtRatio} เท่า</p>}
+                                    {isDanger && <p className="text-[10px] text-rose-400 font-bold tracking-wide">! {language === 'en' ? `High Debt Ratio: ${data.debtRatio}x` : `สัดส่วนหนี้สูง: ${data.debtRatio} เท่า`}</p>}
                                 </div>
 
                                 {/* Poverty Line */}
                                 <div className="col-span-2 w-full flex justify-between md:justify-end items-center mt-2 md:mt-0">
-                                    <span className="md:hidden text-zinc-500 text-sm">เส้นความยากจน:</span>
+                                    <span className="md:hidden text-zinc-500 text-sm">{language === 'en' ? 'Poverty:' : 'เส้นความยากจน:'}</span>
                                     <span className="text-zinc-400 font-mono text-sm bg-zinc-950 px-2 py-1 rounded border border-zinc-800">฿{data.poverty.toLocaleString()}</span>
                                 </div>
                             </div>
@@ -213,7 +291,7 @@ export const ProvinceDataGrid: React.FC<ProvinceDataGridProps> = ({ globalSearch
                     {filteredAndSortedData.length === 0 && (
                         <div className="text-center py-20 text-zinc-500">
                             <AlertTriangle size={48} className="mx-auto mb-4 opacity-50" />
-                            <p>ไม่พบข้อมูลที่ค้นหา</p>
+                            <p>{language === 'en' ? 'No data found' : 'ไม่พบข้อมูลที่ค้นหา'}</p>
                         </div>
                     )}
                 </div>

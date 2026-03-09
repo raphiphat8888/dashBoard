@@ -15,7 +15,6 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { StatCard } from './components/StatCard';
 import { ChartCard, RegionalBarChart, SocioEconomicPieChart, IncomeDistBarChart } from './components/Charts';
-import { SettingsModal } from './components/SettingsModal';
 import { FilterModal } from './components/FilterModal';
 import {
   fetchIncomeData,
@@ -30,14 +29,13 @@ import { ProvinceDataGrid } from './components/ProvinceDataGrid';
 import { IncomeData } from './types';
 
 export default function App() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiReport, setAiReport] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
 
   // System states
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Filter states
@@ -46,6 +44,58 @@ export default function App() {
     year: '2023',
     incomeType: 'Total Monthly Income'
   });
+
+  // Dataset Translation Dictionary
+  const translateDataLabel = useMemo(() => (key: string) => {
+    if (language !== 'en') return key;
+    const clean = key?.toString().trim() || '';
+    const dict: Record<string, string> = {
+      // Regions
+      'กลาง': 'Central',
+      'เหนือ': 'Northern',
+      'ใต้': 'Southern',
+      'ตะวันออกเฉียงเหนือ': 'Northeastern',
+      'ตะวันตก': 'Western',
+      'ตะวันออก': 'Eastern',
+      'กรุงเทพมหานคร': 'Bangkok Metropolitan',
+      // Classes
+      'ผู้ถือครองทำการเกษตร/เพาะเลี้ยง': 'Agriculture / Farming Operators',
+      'ผู้ประกอบธุรกิจของตนเองที่ไม่ใช่การเกษตร': 'Non-Agri Business Owners',
+      'ลูกจ้าง': 'Employees',
+      'ผู้ไม่ได้ปฏิบัติงานเชิงเศรษฐกิจ': 'Economically Inactive',
+      // Income Types
+      'ค่าจ้างและเงินเดือน': 'Wages & Salaries',
+      'กำไรสุทธิจากการทำธุรกิจ': 'Business Income',
+      'กำไรสุทธิจากการทำการเกษตร': 'Agriculture Income',
+      'เงินที่ได้รับเป็นการช่วยเหลือ': 'Assistance & Pensions',
+      'รายได้จากทรัพย์สิน': 'Property Income',
+      'รายได้ที่ไม่เป็นตัวเงิน': 'Non-Money Income',
+      // Income Brackets & Labels
+      'ต่ำกว่า 1,500 บาท': 'Under 1,500 THB',
+      '1,500 - 3,000 บาท': '1,500 - 3,000 THB',
+      '3,001 - 5,000 บาท': '3,001 - 5,000 THB',
+      '5,001 - 10,000 บาท': '5,001 - 10,000 THB',
+      '10,001 - 15,000 บาท': '10,001 - 15,000 THB',
+      '15,001 - 30,000 บาท': '15,001 - 30,000 THB',
+      '30,001 - 50,000 บาท': '30,001 - 50,000 THB',
+      '50,001 - 100,000 บาท': '50,001 - 100,000 THB',
+      'มากกว่า 100,000 บาท': 'Over 100,000 THB',
+      'ต่ำกว่า 500 บาท': 'Under 500 THB',
+      '500 - 1,500 บาท': '500 - 1,500 THB',
+      '1,501 - 3,000 บาท': '1,501 - 3,000 THB',
+    };
+
+    // Attempt exact match first
+    if (dict[clean]) return dict[clean];
+
+    // Generic replacements for dynamically constructed strings
+    let translated = clean;
+    translated = translated.replace('บาท', 'THB');
+    translated = translated.replace('ต่ำกว่า', 'Under');
+    translated = translated.replace('มากกว่า', 'Over');
+
+    return translated;
+  }, [language]);
 
   const handleGenerateReport = () => {
     setActiveTab('analytics');
@@ -101,39 +151,109 @@ export default function App() {
 
   const filteredData = useMemo(() => {
     return data.filter(d => {
-      // 1. Income Type Filter
+      // 1. Year Filter
+      if (filters.year) {
+        const targetYearAD = parseInt(filters.year);
+        const targetYearBE = targetYearAD + 543;
+
+        // Match against either year_ad or year (BE)
+        const dYearAD = d.year_ad ? Number(d.year_ad) : null;
+        const dYearBE = d.year ? Number(d.year) : null;
+
+        if (dYearAD) {
+          if (dYearAD !== targetYearAD) return false;
+        } else if (dYearBE) {
+          if (dYearBE !== targetYearBE) return false;
+        } else {
+          // If no year info found in row, skip it
+          return false;
+        }
+      }
+
+      // 2. Income Type Filter
       let matchIncome = false;
+      const cleanIncome3 = d.source_income3?.toString().trim() || '';
+      const cleanIncome1 = d.source_income1?.toString().trim() || '';
+
       switch (filters.incomeType) {
-        case 'Wages & Salaries': matchIncome = d.source_income3 === 'ค่าจ้างและเงินเดือน'; break;
-        case 'Business Income': matchIncome = d.source_income3 === 'กำไรสุทธิจากการทำธุรกิจ'; break;
-        case 'Agriculture & Farm': matchIncome = d.source_income3 === 'กำไรสุทธิจากการทำการเกษตร'; break;
-        case 'Pensions & Assistance': matchIncome = d.source_income3 === 'เงินที่ได้รับเป็นการช่วยเหลือ'; break;
+        case 'Wages & Salaries':
+          matchIncome = cleanIncome3.includes('ค่าจ้างและเงินเดือน');
+          break;
+        case 'Business Income':
+          matchIncome = cleanIncome3.includes('กำไรสุทธิจากการทำธุรกิจ');
+          break;
+        case 'Agriculture & Farm':
+          matchIncome = cleanIncome3.includes('กำไรสุทธิจากการทำการเกษตร');
+          break;
+        case 'Pensions & Assistance':
+          matchIncome = cleanIncome3.includes('เงินที่ได้รับเป็นการช่วยเหลือ');
+          break;
         case 'Total Monthly Income':
-        default: matchIncome = d.source_income1 === 'รายได้ทั้งสิ้นต่อเดือน'; break;
+        default:
+          matchIncome = cleanIncome1.includes('รายได้ทั้งสิ้นต่อเดือน');
+          break;
       }
       if (!matchIncome) return false;
 
-      // 2. Region Filter
+      // 3. Region Filter
       if (filters.region !== 'All Regions') {
+        const cleanRegion = d.region?.toString().trim() || '';
         if (filters.region === 'Bangkok Metropolitan') {
           if (!bkkProvinces.includes(d.province)) return false;
         } else if (filters.region === 'Central') {
-          if (d.region !== 'กลาง' || bkkProvinces.includes(d.province)) return false;
-        } else if (filters.region === 'Northern' && d.region !== 'เหนือ') return false;
-        else if (filters.region === 'Northeastern' && d.region !== 'ตะวันออกเฉียงเหนือ') return false;
-        else if (filters.region === 'Southern' && d.region !== 'ใต้') return false;
+          if (cleanRegion !== 'กลาง' || bkkProvinces.includes(d.province)) return false;
+        } else if (filters.region === 'Northern' && cleanRegion !== 'เหนือ') return false;
+        else if (filters.region === 'Northeastern' && cleanRegion !== 'ตะวันออกเฉียงเหนือ') return false;
+        else if (filters.region === 'Southern' && cleanRegion !== 'ใต้') return false;
+        else if (filters.region === 'Eastern' && cleanRegion !== 'ตะวันออก') return false;
+        else if (filters.region === 'Western' && cleanRegion !== 'ตะวันตก') return false;
       }
-
-      // 3. Year Filter - currently dataset only has 2566/2023
 
       return true;
     });
   }, [data, filters]);
 
-  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData), [filteredData]);
+  // Create a list of provinces that match the region filter to filter distData
+  const activeProvinces = useMemo(() => {
+    return Array.from(new Set(filteredData.map(d => d.province)));
+  }, [filteredData]);
+
+  const filteredDistData = useMemo(() => {
+    return distData.filter(d => {
+      // 1. Year matching (e.g. 2023 -> 2566)
+      const thaiYear = parseInt(filters.year) + 543;
+      if (Number(d.year) !== thaiYear) return false;
+
+      // 2. Region Filter (match by provinces found in filteredData)
+      if (filters.region !== 'All Regions') {
+        if (!activeProvinces.includes(d.province)) return false;
+      }
+
+      return true;
+    });
+  }, [distData, activeProvinces, filters.year, filters.region]);
+
+  const getEnRegionName = (thaiName: string) => {
+    const map: Record<string, string> = {
+      'กลาง': 'Central',
+      'เหนือ': 'Northern',
+      'ใต้': 'Southern',
+      'ตะวันออกเฉียงเหนือ': 'Northeastern',
+      'ตะวันตก': 'Western',
+      'ตะวันออก': 'Eastern',
+      'กรุงเทพมหานคร': 'Bangkok Metropolitan'
+    };
+    return map[thaiName] || thaiName;
+  };
+
+  const regionalData = useMemo(() => getAggregatedDataByRegion(filteredData).map(d => ({
+    ...d,
+    name: translateDataLabel(d.name),
+    filterKey: getEnRegionName(d.name)
+  })), [filteredData, translateDataLabel]);
   const topProvinces = useMemo(() => getTopProvinces(filteredData), [filteredData]);
-  const classData = useMemo(() => getIncomeByClass(filteredData), [filteredData]);
-  const incomeDistSummary = useMemo(() => getIncomeDistSummary(distData), [distData]); // Could also filter distData but currently mostly global
+  const classData = useMemo(() => getIncomeByClass(filteredData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredData, translateDataLabel]);
+  const incomeDistSummary = useMemo(() => getIncomeDistSummary(filteredDistData).map(d => ({ ...d, name: translateDataLabel(d.name) })), [filteredDistData, translateDataLabel]);
 
   const totalIncome = useMemo(() => {
     return filteredData.reduce((acc, curr) => acc + curr.value, 0);
@@ -163,7 +283,6 @@ export default function App() {
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onSettings={() => setIsSettingsOpen(true)}
       />
 
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -187,7 +306,11 @@ export default function App() {
                   {activeTab === 'demographics' && t('App.Title.demographics')}
                   {activeTab === 'analytics' && t('App.Title.analytics')}
                 </h1>
-                <p className="text-zinc-500 mt-1">{t('App.Subtitle')}</p>
+                <p className="text-zinc-500 mt-1">
+                  {language === 'en'
+                    ? `Household Income Analysis - Thailand ${filters.year}`
+                    : `วิเคราะห์รายได้ครัวเรือน - ประเทศไทย ปี ${parseInt(filters.year) + 543}`}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -208,13 +331,17 @@ export default function App() {
 
             {/* Content Display based on Active Tab */}
             {activeTab === 'overview' && (
-              <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              >
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <StatCard
                     title={t('App.Stat.TotalIncome')}
-                    value={`฿${(totalIncome / 1000000).toFixed(2)}M`}
-                    change="12.5%"
+                    value={totalIncome > 0 ? `฿${(totalIncome / 1000000).toFixed(2)}M` : 'N/A'}
+                    change={totalIncome > 0 ? "12.5%" : undefined}
                     isPositive={true}
                     icon={Wallet}
                     color="emerald"
@@ -222,8 +349,8 @@ export default function App() {
                   />
                   <StatCard
                     title={t('App.Stat.AvgHousehold')}
-                    value={`฿${avgIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-                    change="4.2%"
+                    value={avgIncome > 0 ? `฿${avgIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : 'N/A'}
+                    change={avgIncome > 0 ? "4.2%" : undefined}
                     isPositive={true}
                     icon={TrendingUp}
                     color="blue"
@@ -250,10 +377,22 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
                   <div className="lg:col-span-2">
                     <ChartCard
-                      title={t('App.Chart.RegionTitle')}
+                      title={filters.region === 'All Regions' ? t('App.Chart.RegionTitle') : `${t('App.Chart.RegionTitle')} - ${filters.region}`}
                       subtitle={t('App.Chart.RegionSub')}
                     >
-                      <RegionalBarChart data={regionalData} />
+                      <RegionalBarChart
+                        data={regionalData}
+                        onBarClick={(data) => {
+                          if (!data) {
+                            setFilters(prev => ({ ...prev, region: 'All Regions' }));
+                            return;
+                          }
+                          const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                          if (targetRegion) {
+                            setFilters(prev => ({ ...prev, region: targetRegion }));
+                          }
+                        }}
+                      />
                     </ChartCard>
                   </div>
                   <div className="lg:col-span-1">
@@ -314,26 +453,48 @@ export default function App() {
                 </div>
 
                 <div id="province-data-grid">
-                  <ProvinceDataGrid globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />
+                  <ProvinceDataGrid globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} filters={filters} />
                 </div>
-              </>
+              </motion.div>
             )}
 
             {activeTab === 'regions' && (
-              <div className="space-y-8 mt-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-8 mt-6"
+              >
                 <ChartCard
-                  title={t('App.Chart.RegionTitle')}
+                  title={filters.region === 'All Regions' ? t('App.Chart.RegionTitle') : `${t('App.Chart.RegionTitle')} - ${filters.region}`}
                   subtitle={t('App.Chart.RegionSub')}
                 >
                   <div className="h-[400px]">
-                    <RegionalBarChart data={regionalData} />
+                    <RegionalBarChart
+                      data={regionalData}
+                      onBarClick={(data) => {
+                        if (!data) {
+                          setFilters(prev => ({ ...prev, region: 'All Regions' }));
+                          return;
+                        }
+                        const targetRegion = data?.payload?.filterKey || data?.filterKey || data?.name;
+                        if (targetRegion) {
+                          setFilters(prev => ({ ...prev, region: targetRegion }));
+                        }
+                      }}
+                    />
                   </div>
                 </ChartCard>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'demographics' && (
-              <div className="space-y-8 mt-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, staggerChildren: 0.1 }}
+                className="space-y-8 mt-6"
+              >
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <ChartCard
                     title={t('App.Chart.ClassTitle')}
@@ -350,7 +511,14 @@ export default function App() {
                       {classData.map((cls, i) => (
                         <div key={i} className="flex justify-between items-center p-3 hover:bg-zinc-800/30 rounded-lg transition-colors">
                           <div className="flex items-center gap-3">
-                            <div className={`w-3 h-3 rounded-full ${['bg-emerald-500', 'bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500'][i % 6]}`}></div>
+                            <div className={`w-3 h-3 rounded-full ${(() => {
+                              const n = cls.name?.toString().trim().toLowerCase() || '';
+                              if (n.includes('ธุรกิจ') || n.includes('business') || n.includes('ไม่ใช่การเกษตร')) return 'bg-blue-500';
+                              if (n.includes('เกษตร') || n.includes('agri')) return 'bg-emerald-500';
+                              if (n.includes('ลูกจ้าง') || n.includes('employee')) return 'bg-amber-500';
+                              if (n.includes('ไม่ได้ปฏิบัติงาน') || n.includes('inactive')) return 'bg-red-500';
+                              return 'bg-purple-500';
+                            })()}`}></div>
                             <span className="text-zinc-300 font-medium">{cls.name}</span>
                           </div>
                           <span className="text-zinc-100 font-semibold">฿{cls.value.toLocaleString()}</span>
@@ -362,19 +530,24 @@ export default function App() {
 
                 <div className="w-full">
                   <ChartCard
-                    title="การกระจายรายได้ตามขนาดครัวเรือน (Income Distribution)"
-                    subtitle="แสดงร้อยละเฉลี่ยของครัวเรือนตามช่วงรายได้ (Average distribution across all provinces)"
+                    title={language === 'en' ? "Income Distribution by Household Size" : "การกระจายรายได้ตามขนาดครัวเรือน (Income Distribution)"}
+                    subtitle={language === 'en' ? "Average distribution across all provinces structure" : "แสดงร้อยละเฉลี่ยของครัวเรือนตามช่วงรายได้ (Average distribution across all provinces)"}
                   >
                     <div className="h-[350px]">
                       <IncomeDistBarChart data={incomeDistSummary} />
                     </div>
                   </ChartCard>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'analytics' && (
-              <div className="space-y-8 mt-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="space-y-8 mt-6"
+              >
                 <div className="bg-emerald-500 rounded-2xl p-10 relative overflow-hidden group">
                   <div className="relative z-10">
                     <h3 className="text-4xl font-bold text-zinc-950 leading-tight tracking-tight">{t('App.An.Title')}</h3>
@@ -389,11 +562,6 @@ export default function App() {
                       >
                         {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
                         {isGenerating ? t('App.AI.Analyzing') : t('App.An.GenBtn')}
-                      </button>
-                      <button
-                        onClick={() => setIsSettingsOpen(true)}
-                        className="px-6 py-3 bg-emerald-400 text-zinc-950 rounded-xl font-bold hover:bg-emerald-300 transition-all shadow-xl">
-                        {t('App.An.ConfigBtn')}
                       </button>
                     </div>
                   </div>
@@ -448,26 +616,22 @@ export default function App() {
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
-      </main>
+      </main >
 
       {/* Modals */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-
-      <FilterModal
+      < FilterModal
         isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
+        onClose={() => setIsFilterOpen(false)
+        }
         onApply={(newFilters) => {
           setFilters(newFilters);
         }}
         currentFilters={filters}
       />
-    </div>
+    </div >
   );
 }

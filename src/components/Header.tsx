@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, User, Languages } from 'lucide-react';
+import { Search, Languages } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface HeaderProps {
@@ -39,20 +39,6 @@ export const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange, onSe
           <Languages size={14} />
           {language.toUpperCase()}
         </button>
-        <button className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded-full transition-all relative">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full border-2 border-zinc-950"></span>
-        </button>
-        <div className="h-8 w-[1px] bg-zinc-800 mx-2"></div>
-        <div className="flex items-center gap-3 pl-2 cursor-pointer group">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-zinc-100 leading-none">{t('Header.UserRole')}</p>
-            <p className="text-xs text-zinc-500 mt-1">{t('Header.UserType')}</p>
-          </div>
-          <div className="w-9 h-9 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-400 group-hover:bg-zinc-700 transition-all">
-            <User size={20} />
-          </div>
-        </div>
       </div>
     </header>
   );
