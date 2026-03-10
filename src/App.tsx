@@ -9,7 +9,9 @@ import {
   Filter,
   Loader2,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -33,12 +35,21 @@ import { useLanguage } from './lib/LanguageContext';
 import { ProvinceDataGrid } from './components/ProvinceDataGrid';
 import { ThailandMap } from './components/ThailandMap';
 import { IncomeData } from './types';
+import { generateEconomicReport, askAIQuestion, AIReportDraft, ChatMessage } from './services/aiService';
 
 export default function App() {
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiReport, setAiReport] = useState(false);
+  const [aiReportData, setAiReportData] = useState<AIReportDraft | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  // Chat States
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [currentChatMsg, setCurrentChatMsg] = useState('');
+  const [isChatting, setIsChatting] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+
   const [globalSearch, setGlobalSearch] = useState('');
 
   // System states
@@ -112,14 +123,60 @@ export default function App() {
     return translated;
   }, [language]);
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     setActiveTab('analytics');
     setIsGenerating(true);
-    setAiReport(false);
-    setTimeout(() => {
+    setAiReportData(null);
+    setAiError(null);
+
+    try {
+      const context = {
+        totalIncome,
+        provincesCount: activeProvinces.length,
+        topProvinces: topProvinces.slice(0, 5),
+        filters
+      };
+      const report = await generateEconomicReport(context, language);
+      setAiReportData(report);
+    } catch (error: any) {
+      console.error(error);
+      setAiError(error.message || 'Failed to generate insight report');
+    } finally {
       setIsGenerating(false);
-      setAiReport(true);
-    }, 2500);
+    }
+  };
+
+  const handleSendChat = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!currentChatMsg.trim() || isChatting) return;
+
+    const userMsg = currentChatMsg.trim();
+    setCurrentChatMsg('');
+    setChatError(null);
+
+    const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: userMsg }];
+    setChatHistory(newHistory);
+    setIsChatting(true);
+
+    try {
+      const minifiedData = mapData.map(d => ({
+        P: d.province,
+        I: d.income,
+        D: d.debt
+      }));
+
+      const answer = await askAIQuestion(userMsg, aiReportData, chatHistory, minifiedData, language);
+      setChatHistory([...newHistory, { role: 'ai', content: answer }]);
+    } catch (err: any) {
+      console.error(err);
+      if (err.message?.includes('Rate limit exceeded') || err.message?.includes('429')) {
+        setChatError(t('App.Chat.ErrorRateLimit'));
+      } else {
+        setChatError(err.message || 'Failed to communicate with AI');
+      }
+    } finally {
+      setIsChatting(false);
+    }
   };
 
   const handleExportData = () => {
@@ -318,6 +375,73 @@ export default function App() {
       </div>
     );
   }
+
+  // ── Lightweight Markdown Renderer ──────────────────────────────────────────
+  const renderMarkdown = (text: string) => {
+    const lines = text.split('\n');
+    const elements: React.ReactNode[] = [];
+    let listBuffer: string[] = [];
+    let isOrdered = false;
+
+    const flushList = (key: string) => {
+      if (listBuffer.length === 0) return;
+      if (isOrdered) {
+        elements.push(
+          <ol key={key} className="list-decimal list-inside space-y-1 my-2 pl-1 text-zinc-200">
+            {listBuffer.map((item, i) => (
+              <li key={i} dangerouslySetInnerHTML={{ __html: inlineMd(item) }} />
+            ))}
+          </ol>
+        );
+      } else {
+        elements.push(
+          <ul key={key} className="list-disc list-inside space-y-1 my-2 pl-1 text-zinc-200">
+            {listBuffer.map((item, i) => (
+              <li key={i} dangerouslySetInnerHTML={{ __html: inlineMd(item) }} />
+            ))}
+          </ul>
+        );
+      }
+      listBuffer = [];
+    };
+
+    const inlineMd = (s: string) =>
+      s
+        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-zinc-100 font-semibold">$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    lines.forEach((line, idx) => {
+      const orderedMatch = line.match(/^(\d+)\.\s+(.*)/);  // 1. item
+      const bulletMatch = line.match(/^[-*]\s+(.*)/);      // - item
+
+      if (orderedMatch) {
+        // Flush only if we were previously in a bullet list (switching types)
+        if (listBuffer.length > 0 && !isOrdered) flushList(`switch-${idx}`);
+        isOrdered = true;
+        listBuffer.push(orderedMatch[2]);
+      } else if (bulletMatch) {
+        // Flush only if we were previously in an ordered list (switching types)
+        if (listBuffer.length > 0 && isOrdered) flushList(`switch-${idx}`);
+        isOrdered = false;
+        listBuffer.push(bulletMatch[1]);
+      } else {
+        // Non-list line: flush whatever list was building
+        flushList(`flush-${idx}`);
+        if (line.trim() === '') {
+          elements.push(<div key={`br-${idx}`} className="h-2" />);
+        } else {
+          elements.push(
+            <p key={idx} className="text-zinc-200 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: inlineMd(line) }}
+            />
+          );
+        }
+      }
+    });
+    flushList('end');
+    return <div className="space-y-1">{elements}</div>;
+  };
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="fixed inset-0 flex bg-zinc-950 font-sans selection:bg-emerald-500/30 overflow-hidden">
@@ -668,8 +792,17 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Error Banner */}
+                {aiError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 relative animate-in fade-in duration-500">
+                    <p className="text-red-400 font-bold mb-1">Failed to generate AI insights</p>
+                    <p className="text-red-400/80 text-sm">{aiError}</p>
+                    <p className="text-zinc-500 text-xs mt-3">Please ensure your VITE_GEMINI_API_KEY is correctly set in .env.local and that you have Internet connectivity.</p>
+                  </div>
+                )}
+
                 {/* AI Generated Report Area */}
-                {aiReport && (
+                {aiReportData && (
                   <div className="bg-zinc-900/50 border border-emerald-500/30 rounded-2xl p-8 relative animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div className="absolute top-0 right-0 p-4">
                       <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 text-xs font-semibold rounded-full border border-emerald-500/20">
@@ -683,32 +816,106 @@ export default function App() {
                       <h3 className="text-2xl font-bold text-zinc-100">{t('App.An.AISummary')}</h3>
                     </div>
 
-                    <div className="space-y-5 text-zinc-300 leading-relaxed">
-                      <p>
-                        {t('App.An.BasedOn')} <strong className="text-zinc-100">77 {t('App.An.Provinces')}</strong>{t('App.An.TotalIs')} <strong className="text-zinc-100 font-mono text-emerald-400">฿{(totalIncome / 1000000).toFixed(2)}M</strong>.
+                    <div className="space-y-6 text-zinc-300 leading-relaxed">
+                      <p className="text-lg text-zinc-200">
+                        {aiReportData.summary}
                       </p>
 
-                      <div className="p-4 bg-zinc-950/50 rounded-xl border border-zinc-800/80">
-                        <h4 className="text-zinc-100 font-semibold mb-3">{t('App.An.KeyObs')}</h4>
-                        <ul className="space-y-3">
-                          <li className="flex gap-3">
-                            <TrendingUp size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                            <span><strong className="text-zinc-200">{t('App.An.Obs1.Title')}</strong> {t('App.An.Obs1.Desc')}</span>
-                          </li>
-                          <li className="flex gap-3">
-                            <Users size={18} className="text-blue-500 shrink-0 mt-0.5" />
-                            <span><strong className="text-zinc-200">{t('App.An.Obs2.Title')}</strong> {t('App.An.Obs2.Desc')}</span>
-                          </li>
-                          <li className="flex gap-3">
-                            <MapPin size={18} className="text-amber-500 shrink-0 mt-0.5" />
-                            <span><strong className="text-zinc-200">{t('App.An.Obs3.Title')}</strong> {topProvinces.slice(0, 3).map(p => p.name).join(', ')} {t('App.An.Obs3.Desc')}</span>
-                          </li>
+                      <div className="p-5 bg-zinc-950/50 rounded-xl border border-zinc-800/80">
+                        <h4 className="text-zinc-100 font-semibold mb-4 text-lg">{t('App.An.KeyObs')}</h4>
+                        <ul className="space-y-4">
+                          {aiReportData.observations.map((obs, idx) => (
+                            <li key={idx} className="flex gap-4">
+                              <TrendingUp size={20} className="text-emerald-500 shrink-0 mt-1" />
+                              <div className="flex flex-col">
+                                <strong className="text-zinc-200 text-base">{obs.title}</strong>
+                                <span className="text-zinc-400 mt-1 text-sm">{obs.desc}</span>
+                              </div>
+                            </li>
+                          ))}
                         </ul>
                       </div>
 
-                      <p className="text-sm text-zinc-500 mt-4 italic">
-                        {t('App.An.Rec')}
-                      </p>
+                      <div className="mt-6">
+                        <div className="border-l-4 border-emerald-500 pl-4 py-3 bg-emerald-500/5 rounded-r-xl">
+                          <p className="text-base text-zinc-300">
+                            <strong className="text-emerald-400">Recommendation:</strong> {aiReportData.recommendation}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Chat Interface */}
+                {aiReportData && (
+                  <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl flex flex-col overflow-hidden h-[500px] animate-in slide-in-from-bottom-8 duration-700 delay-200">
+                    <div className="p-4 border-b border-zinc-800 flex items-center gap-3 bg-zinc-900/80">
+                      <MessageSquare size={18} className="text-emerald-500" />
+                      <h3 className="font-semibold text-zinc-200">{t('App.Chat.ChatHistoryTitle')}</h3>
+                    </div>
+
+                    <div className="flex-1 p-6 overflow-y-auto space-y-6">
+                      {chatHistory.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-3">
+                          <MessageSquare size={32} className="opacity-50" />
+                          <p>Start a conversation to dive deeper into the data.</p>
+                        </div>
+                      ) : (
+                        chatHistory.map((msg, idx) => (
+                          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] rounded-2xl px-5 py-3 ${msg.role === 'user'
+                              ? 'bg-emerald-500 text-zinc-950 font-medium'
+                              : 'bg-zinc-800 text-zinc-200 leading-relaxed'
+                              }`}>
+                              {msg.role === 'ai' && (
+                                <div className="flex items-center gap-2 mb-3 opacity-80">
+                                  <Sparkles size={14} className="text-emerald-400" />
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">AI Assistant</span>
+                                </div>
+                              )}
+                              {msg.role === 'ai' ? renderMarkdown(msg.content) : msg.content}
+                            </div>
+                          </div>
+                        ))
+                      )}
+
+                      {isChatting && (
+                        <div className="flex justify-start">
+                          <div className="max-w-[80%] rounded-2xl px-5 py-4 bg-zinc-800 text-zinc-400 flex items-center gap-3">
+                            <Loader2 size={16} className="animate-spin text-emerald-500" />
+                            {t('App.Chat.AIThinking')}
+                          </div>
+                        </div>
+                      )}
+                      {chatError && (
+                        <div className="flex justify-center p-3">
+                          <span className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium">
+                            ⚠️ {chatError}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 bg-zinc-900/80 border-t border-zinc-800">
+                      <form onSubmit={handleSendChat} className="flex gap-3 relative">
+                        <input
+                          type="text"
+                          value={currentChatMsg}
+                          onChange={e => setCurrentChatMsg(e.target.value)}
+                          placeholder={t('App.Chat.AskPlaceholder')}
+                          disabled={isChatting}
+                          className="flex-1 bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 disabled:opacity-50"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!currentChatMsg.trim() || isChatting}
+                          className="px-5 py-3 bg-emerald-500 text-zinc-950 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {t('App.Chat.SendBtn')}
+                          <Send size={16} />
+                        </button>
+                      </form>
                     </div>
                   </div>
                 )}

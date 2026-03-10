@@ -76,7 +76,14 @@ const translations: Record<Language, Record<string, string>> = {
         'App.An.Obs2.Desc': 'A significant concentration of wealth is evident within the non-agricultural business and corporate employee sectors, presenting a structural income gap when compared to agricultural and rural demographics.',
         'App.An.Obs3.Title': 'Top Performing Economic Hubs:',
         'App.An.Obs3.Desc': 'are leading the nation as primary economic drivers, generating substantial average monthly household incomes fueled by industrial commercialization and robust service sectors.',
-        'App.An.Rec': '* Recommendation: Focus policy initiatives on the Northeast region to bridge the 18% income gap identified in the lower quartile households.'
+        'App.An.Rec': '* Recommendation: Focus policy initiatives on the Northeast region to bridge the 18% income gap identified in the lower quartile households.',
+
+        // Chat
+        'App.Chat.AskPlaceholder': 'Have questions about these insights? Ask the AI...',
+        'App.Chat.SendBtn': 'Send',
+        'App.Chat.AIThinking': 'AI is analyzing...',
+        'App.Chat.ErrorRateLimit': 'Rate limit exceeded (Free API tier maximum reached). Please wait 1 minute before asking again.',
+        'App.Chat.ChatHistoryTitle': 'Interactive AI Discussion'
     },
     th: {
         // Sidebar
@@ -145,7 +152,14 @@ const translations: Record<Language, Record<string, string>> = {
         'App.An.Obs2.Desc': 'พบการกระจุกตัวของความมั่งคั่งอย่างมีนัยสำคัญในกลุ่มผู้ประกอบธุรกิจที่ไม่ใช่การเกษตรและกลุ่มลูกจ้างประจำองค์กร ซึ่งสะท้อนช่องว่างรายได้เชิงโครงสร้างเมื่อเทียบกับประชากรในภาคเกษตรกรรม',
         'App.An.Obs3.Title': 'ศูนย์กลางขับเคลื่อนเศรษฐกิจหลัก:',
         'App.An.Obs3.Desc': 'เป็นกลุ่มจังหวัดผู้นำระดับประเทศที่ทำหน้าที่เป็นกลไกหลัก สร้างรายได้เฉลี่ยต่อครัวเรือนได้สูงสุด โดยได้รับแรงหนุนจากการพาณิชย์และภาคบริการที่แข็งแกร่ง',
-        'App.An.Rec': '* คำแนะนำเพิ่มเติม: ควรมุ่งเน้นนโยบายช่วยเหลือลงพื้นที่ภาคตะวันออกเฉียงเหนือเพื่อลดช่องว่างรายได้ 18% ในกลุ่มครัวเรือนระดับล่าง'
+        'App.An.Rec': '* คำแนะนำเพิ่มเติม: ควรมุ่งเน้นนโยบายช่วยเหลือลงพื้นที่ภาคตะวันออกเฉียงเหนือเพื่อลดช่องว่างรายได้ 18% ในกลุ่มครัวเรือนระดับล่าง',
+
+        // Chat
+        'App.Chat.AskPlaceholder': 'มีข้อสงสัยเกี่ยวกับข้อมูลไหม? พิมพ์บอก AI ได้เลย...',
+        'App.Chat.SendBtn': 'ส่ง',
+        'App.Chat.AIThinking': 'AI กำลังคิดคำตอบ...',
+        'App.Chat.ErrorRateLimit': 'คุณส่งคำถามเร็วเกินไป (ระบบฟรีจำกัดจำนวน) กรุณารอสัก 1 นาทีก่อนพิมพ์ถามใหม่ครับ',
+        'App.Chat.ChatHistoryTitle': 'สนทนากับ AI ย่อยข้อมูล'
     }
 };
 
