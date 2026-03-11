@@ -36,6 +36,7 @@ import { ProvinceDataGrid } from './components/ProvinceDataGrid';
 import { ThailandMap } from './components/ThailandMap';
 import { IncomeData } from './types';
 import { generateEconomicReport, askAIQuestion, AIReportDraft, ChatMessage } from './services/aiService';
+import { tryAnswerLocally, aggregateAgriData, AgriData } from './services/localQueryHandler';
 
 export default function App() {
   const { t, language } = useLanguage();
@@ -159,13 +160,24 @@ export default function App() {
     setIsChatting(true);
 
     try {
+      // ── Step 1: Try to answer locally (saves RPD quota) ─────────────────
+      const masterRecords = mapData.map(d => ({ province: d.province, income: d.income, debt: d.debt }));
+      const localAnswer = tryAnswerLocally(userMsg, agriData, masterRecords, language);
+
+      if (localAnswer !== null) {
+        // Answer available locally — no API call needed!
+        setChatHistory([...newHistory, { role: 'ai', content: localAnswer }]);
+        return;
+      }
+
+      // ── Step 2: Fall back to Gemini API for complex questions ────────────
       const minifiedData = mapData.map(d => ({
         P: d.province,
         I: d.income,
         D: d.debt
       }));
 
-      const answer = await askAIQuestion(userMsg, aiReportData, chatHistory, minifiedData, language);
+      const answer = await askAIQuestion(userMsg, aiReportData, chatHistory, minifiedData, language, agriData);
       setChatHistory([...newHistory, { role: 'ai', content: answer }]);
     } catch (err: any) {
       console.error(err);
@@ -212,6 +224,9 @@ export default function App() {
   const [masterData, setMasterData] = useState<any[]>([]);
   const [socioData, setSocioData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Pre-aggregate agriculture data (computed once from socioData — no extra API calls)
+  const agriData: AgriData[] = useMemo(() => aggregateAgriData(socioData), [socioData]);
 
   useEffect(() => {
     Promise.all([fetchIncomeData(), fetchIncomeDistData(), fetchMasterData(), fetchSocioEcoData()]).then(([res1, res2, res3, res4]) => {

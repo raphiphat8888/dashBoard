@@ -1,3 +1,5 @@
+import { AgriData } from './localQueryHandler';
+
 export interface DashboardContext {
     totalIncome: number;
     provincesCount: number;
@@ -113,7 +115,8 @@ export const askAIQuestion = async (
     reportContext: AIReportDraft | null,
     chatHistory: ChatMessage[],
     dataset: any[],
-    language: string = 'en'
+    language: string = 'en',
+    agriData?: AgriData[]
 ): Promise<string> => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey || apiKey.trim() === '') {
@@ -128,6 +131,16 @@ export const askAIQuestion = async (
         contextString = `\nContext (Dashboard Summary):\n${reportContext.summary}\nRecommendations:\n${reportContext.recommendation}\nObservations:\n${reportContext.observations.map(o => o.title + ': ' + o.desc).join('\n')}`;
     }
 
+    // Build compact agriculture summary string (~750 tokens total)
+    let agriString = '';
+    if (agriData && agriData.length > 0) {
+        const agriSummary = agriData
+            .sort((a, b) => b.farmingHouseholds - a.farmingHouseholds)
+            .map(d => `${d.province}|${d.farmingHouseholds}|${d.avgDebt}`)
+            .join(';');
+        agriString = `\n\nAgriculture Data by Province (Province|FarmingHouseholds|AvgDebt฿):\n${agriSummary}`;
+    }
+
     const systemPrompt = `You are an expert economic planner and manager for Thailand. You have deep knowledge of household income and debt distribution.
 The user is asking a question about the dashboard data. Answer concisely and professionally.
 You MUST base your statistical answers strictly on the provided context and dataset. Do NOT make up numbers or statistics.
@@ -136,7 +149,7 @@ Respond in ${language === 'th' ? 'Thai' : 'English'}.
 ${contextString}
 
 Active Dashboard Dataset Context (P = Province, I = Avg Monthly Income, D = Avg Monthly Debt):
-${JSON.stringify(dataset)}`;
+${JSON.stringify(dataset)}${agriString}`;
 
     // Format chat history for Gemini API
     const contents = chatHistory.map(msg => ({

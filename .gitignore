@@ -1,7 +1,7 @@
 node_modules
 
-# local env files
-.env*.local
+# local env files — .env.local IS tracked (template for teammates)
+# teammates: fill in your own VITE_GEMINI_API_KEY in .env.local
 .env
 
 # build results
